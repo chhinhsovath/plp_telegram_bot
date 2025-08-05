@@ -4,7 +4,9 @@ import prisma from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("Registration API called");
     const { name, email, password } = await req.json();
+    console.log("Registration data:", { name, email, password: "***" });
 
     // Validation
     if (!email || !password) {
@@ -22,9 +24,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    console.log("Checking existing user for:", email);
+    let existingUser;
+    try {
+      existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+      console.log("Existing user found:", !!existingUser);
+    } catch (dbError) {
+      console.error("Database connection error:", dbError);
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 500 }
+      );
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -37,14 +50,24 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "viewer", // Default role
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: "viewer", // Default role
+        },
+      });
+      console.log("User created successfully:", user.id);
+    } catch (createError) {
+      console.error("User creation error:", createError);
+      return NextResponse.json(
+        { error: "Failed to create user" },
+        { status: 500 }
+      );
+    }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;

@@ -37,9 +37,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
+    // Only protect page routes, not API routes
     "/dashboard/:path*",
     "/groups/:path*",
-    "/messages/:path*",
+    "/messages/:path*", 
     "/analytics/:path*",
     "/settings/:path*",
   ],
