@@ -38,9 +38,15 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: demoUser.email,
         password: demoUser.password,
-        callbackUrl: "/auth-success",
-        redirect: true,
+        callbackUrl: "/dashboard",
+        redirect: false,
       });
+
+      if (result?.ok) {
+        // Force a full page reload to ensure proper session establishment
+        window.location.href = "/dashboard";
+        return;
+      }
 
       if (result?.error) {
         setError(t('auth.invalidCredentials'));
@@ -62,15 +68,20 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/auth-success",
-        redirect: true,
+        callbackUrl: "/dashboard",
+        redirect: false,
       });
+
+      if (result?.ok) {
+        // Force a full page reload to ensure proper session establishment
+        window.location.href = "/dashboard";
+        return;
+      }
 
       if (result?.error) {
         setError(t('auth.invalidCredentials'));
         setIsLoading(false);
       }
-      // Don't set loading to false here - let the redirect happen
     } catch (error) {
       setError(t('common.error'));
       setIsLoading(false);
