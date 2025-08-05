@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Hanuman } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${hanuman.variable}`}>
       <body className={inter.className}>
-        <QueryProvider>
-          {children}
-        </QueryProvider>
+        <LanguageProvider>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
