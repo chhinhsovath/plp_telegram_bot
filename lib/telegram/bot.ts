@@ -1,11 +1,10 @@
 import { Telegraf, Context } from 'telegraf';
+import { env } from '../env';
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
+// Use validated environment variable
+const token = env.TELEGRAM_BOT_TOKEN;
 
-// Don't throw during build time
-const isBuilding = process.env.NODE_ENV === 'production' && !process.env.TELEGRAM_BOT_TOKEN && typeof window === 'undefined';
-
-export const bot = token ? new Telegraf(token) : null as any;
+export const bot = new Telegraf(token);
 
 // Bot commands
 if (bot) {

@@ -2,26 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { MessageFilterSchema } from "@/lib/validations";
+import { z } from "zod";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const searchParams = req.nextUrl.searchParams;
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const search = searchParams.get("search") || "";
-  const groupId = searchParams.get("groupId");
-  const messageType = searchParams.get("type");
-  const startDate = searchParams.get("startDate");
-  const endDate = searchParams.get("endDate");
-
-  const skip = (page - 1) * limit;
+  // Since auth is disabled, we'll skip the session check
+  // const session = await getServerSession(authOptions);
+  // if (!session) {
+  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // }
 
   try {
+    // Parse and validate query parameters with Zod
+    const searchParams = req.nextUrl.searchParams;
+    const rawParams = {
+      groupId: searchParams.get("groupId") || undefined,
+      messageType: searchParams.get("type") || undefined,
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+      search: searchParams.get("search") || undefined,
+      limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 20,
+      offset: searchParams.get("page") ? (parseInt(searchParams.get("page")!) - 1) * 20 : 0,
+    };
+
+    const filters = MessageFilterSchema.parse(rawParams);
+    
+    // Use validated filters
+    const { limit, offset, groupId, messageType, startDate, endDate, search } = filters;
+
     const where: any = {
       isDeleted: false,
     };
@@ -33,11 +41,11 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    if (groupId && groupId !== "all") {
+    if (groupId) {
       where.groupId = groupId;
     }
 
-    if (messageType && messageType !== "all") {
+    if (messageType) {
       where.messageType = messageType;
     }
 
@@ -67,11 +75,13 @@ export async function GET(req: NextRequest) {
           },
         },
         orderBy: { telegramDate: "desc" },
-        skip,
+        skip: offset,
         take: limit,
       }),
       prisma.message.count({ where }),
     ]);
+
+    const page = Math.floor(offset / limit) + 1;
 
     return NextResponse.json({
       messages,
@@ -83,6 +93,20 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    // Handle Zod validation errors specifically
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          error: "Invalid query parameters",
+          details: error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      );
+    }
+    
     console.error("Error fetching messages:", error);
     return NextResponse.json(
       { error: "Failed to fetch messages" },
