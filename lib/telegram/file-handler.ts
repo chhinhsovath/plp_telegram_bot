@@ -3,6 +3,10 @@ import { put } from '@vercel/blob';
 
 export async function downloadAndStoreFile(fileId: string, fileName?: string) {
   try {
+    if (!bot) {
+      throw new Error('Telegram bot not initialized');
+    }
+    
     // Get file info from Telegram
     const file = await bot.telegram.getFile(fileId);
     const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;

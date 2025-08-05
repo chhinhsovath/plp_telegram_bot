@@ -45,8 +45,8 @@ function validateEnv() {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('❌ Invalid environment variables:');
-      error.errors.forEach(err => {
-        console.error(`  - ${err.path.join('.')}: ${err.message}`);
+      error.issues.forEach(issue => {
+        console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
       });
       
       // In development, show which env vars are missing

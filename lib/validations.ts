@@ -68,9 +68,8 @@ export const TelegramUpdateSchema = z.object({
 
 // ===== API Request Schemas =====
 export const CreateGroupSchema = z.object({
-  telegramId: z.string(),
+  telegramId: z.union([z.string(), z.number()]).transform(val => BigInt(val)),
   title: z.string().min(1).max(255),
-  type: z.enum(['group', 'supergroup', 'channel']),
   username: z.string().optional(),
   description: z.string().max(1000).optional(),
 });
@@ -118,7 +117,8 @@ export const SettingsSchema = z.object({
 // ===== Type Exports =====
 export type TelegramUpdate = z.infer<typeof TelegramUpdateSchema>;
 export type TelegramMessage = z.infer<typeof TelegramMessageSchema>;
-export type CreateGroupInput = z.infer<typeof CreateGroupSchema>;
+export type CreateGroupInput = z.input<typeof CreateGroupSchema>;
+export type CreateGroupOutput = z.output<typeof CreateGroupSchema>;
 export type UpdateGroupInput = z.infer<typeof UpdateGroupSchema>;
 export type MessageFilter = z.infer<typeof MessageFilterSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;

@@ -30,6 +30,13 @@ export async function GET(
     }
 
     // Otherwise, get the file from Telegram
+    if (!bot) {
+      return NextResponse.json(
+        { error: "Telegram bot not configured" },
+        { status: 503 }
+      );
+    }
+    
     try {
       const file = await bot.telegram.getFile(attachment.telegramFileId);
       const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;

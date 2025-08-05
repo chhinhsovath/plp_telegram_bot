@@ -1,10 +1,19 @@
 import { Telegraf, Context } from 'telegraf';
-import { env } from '../env';
 
-// Use validated environment variable
-const token = env.TELEGRAM_BOT_TOKEN;
+// Only validate env in server context, not during build
+let bot: Telegraf | null = null;
 
-export const bot = new Telegraf(token);
+if (typeof window === 'undefined' && process.env.TELEGRAM_BOT_TOKEN) {
+  try {
+    const { env } = require('../env');
+    bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
+  } catch (error) {
+    // Use fallback during build
+    bot = process.env.TELEGRAM_BOT_TOKEN ? new Telegraf(process.env.TELEGRAM_BOT_TOKEN) : null;
+  }
+}
+
+export { bot };
 
 // Bot commands
 if (bot) {

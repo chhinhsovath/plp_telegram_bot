@@ -5,9 +5,11 @@ import { TelegramUpdateSchema } from '@/lib/validations';
 import { z } from 'zod';
 
 // Set up message handlers
-bot.on('message', handleMessage);
-bot.on('new_chat_members', handleMemberJoin);
-bot.on('left_chat_member', handleMemberLeft);
+if (bot) {
+  bot.on('message', handleMessage);
+  bot.on('new_chat_members', handleMemberJoin);
+  bot.on('left_chat_member', handleMemberLeft);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     
-    // Validate the incoming webhook data with Zod
+    // Validate the incoming webhook data with Zod for logging/monitoring
     try {
       const validatedUpdate = TelegramUpdateSchema.parse(body);
       console.log('✅ Valid Telegram update received:', {
@@ -31,24 +33,26 @@ export async function POST(req: NextRequest) {
               validatedUpdate.edited_message ? 'edited_message' : 
               validatedUpdate.channel_post ? 'channel_post' : 'other'
       });
-      
-      // Process validated update
-      await bot.handleUpdate(validatedUpdate);
-      
-      return NextResponse.json({ ok: true });
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
-        console.error('❌ Invalid Telegram webhook data:', validationError.errors);
-        return NextResponse.json({ 
-          error: 'Invalid webhook format',
-          details: validationError.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          }))
-        }, { status: 400 });
+        console.error('❌ Invalid Telegram webhook data:', validationError.issues);
+        // Log but don't reject - let Telegraf handle its own validation
+        console.error('Validation issues:', validationError.issues.map(issue => ({
+          path: issue.path.join('.'),
+          message: issue.message
+        })));
       }
-      throw validationError;
     }
+    
+    // Process update with bot
+    if (!bot) {
+      console.error('❌ Telegram bot not initialized');
+      return NextResponse.json({ error: 'Bot not configured' }, { status: 503 });
+    }
+    
+    await bot.handleUpdate(body);
+    
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -58,10 +62,10 @@ export async function POST(req: NextRequest) {
 // Health check endpoint
 export async function GET() {
   return NextResponse.json({ 
-    status: 'ok',
-    bot: {
+    status: bot ? 'ok' : 'not configured',
+    bot: bot ? {
       username: bot.botInfo?.username || 'unknown',
       id: bot.botInfo?.id || 'unknown'
-    }
+    } : null
   });
 }

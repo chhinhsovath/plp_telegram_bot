@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
       data: {
         telegramId: validatedData.telegramId,
         title: validatedData.title,
-        type: validatedData.type,
         username: validatedData.username,
         description: validatedData.description,
       },
@@ -74,9 +73,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { 
           error: "Invalid request data",
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
+          details: error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
           }))
         },
         { status: 400 }
