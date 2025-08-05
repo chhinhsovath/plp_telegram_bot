@@ -35,7 +35,7 @@ async function debugLogin() {
 
         // Test password verification
         if (user.password) {
-          const testPasswords = {
+          const testPasswords: { [key: string]: string } = {
             'admin@demo.com': 'admin123',
             'moderator@demo.com': 'moderator123',
             'viewer@demo.com': 'viewer123'
