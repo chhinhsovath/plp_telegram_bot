@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, Crown, Shield, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +21,38 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const demoUsers = [
+    { role: "admin", email: "admin@demo.com", password: "admin123", icon: Crown, color: "from-red-500 to-red-600" },
+    { role: "moderator", email: "moderator@demo.com", password: "moderator123", icon: Shield, color: "from-blue-500 to-blue-600" },
+    { role: "viewer", email: "viewer@demo.com", password: "viewer123", icon: User, color: "from-green-500 to-green-600" }
+  ];
+
+  const handleDemoLogin = async (demoUser: typeof demoUsers[0]) => {
+    setError("");
+    setIsLoading(true);
+    setEmail(demoUser.email);
+    setPassword(demoUser.password);
+
+    try {
+      const result = await signIn("credentials", {
+        email: demoUser.email,
+        password: demoUser.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(t('auth.invalidCredentials'));
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (error) {
+      setError(t('common.error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +236,35 @@ export default function LoginPage() {
                 </Button>
               </motion.div>
             </form>
+
+            {/* Demo Login Buttons */}
+            <motion.div variants={itemVariants} className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className={`text-sm text-gray-600 dark:text-gray-400 text-center mb-3 ${language === 'km' ? 'font-hanuman' : ''}`}>
+                🎭 Quick Demo Access
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {demoUsers.map((demoUser) => {
+                  const IconComponent = demoUser.icon;
+                  return (
+                    <Button
+                      key={demoUser.role}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDemoLogin(demoUser)}
+                      disabled={isLoading}
+                      className={`w-full justify-start bg-gradient-to-r ${demoUser.color} text-white border-0 hover:opacity-90 transition-opacity ${language === 'km' ? 'font-hanuman' : ''}`}
+                    >
+                      <IconComponent className="w-4 h-4 mr-2" />
+                      Login as {demoUser.role.charAt(0).toUpperCase() + demoUser.role.slice(1)}
+                    </Button>
+                  );
+                })}
+              </div>
+              <div className={`text-xs text-gray-500 dark:text-gray-400 text-center mt-2 ${language === 'km' ? 'font-hanuman' : ''}`}>
+                Click any button above to instantly login and explore different user roles
+              </div>
+            </motion.div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <motion.div variants={itemVariants} className={`text-sm text-gray-600 dark:text-gray-400 text-center ${language === 'km' ? 'font-hanuman' : ''}`}>
