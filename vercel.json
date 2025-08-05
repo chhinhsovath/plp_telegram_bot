@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/telegram/webhook/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

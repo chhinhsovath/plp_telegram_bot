@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String?
+  name             String?
+  role             String         @default("viewer")
+  telegramId       BigInt?        @unique @map("telegram_id")
+  telegramUsername String?        @map("telegram_username")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  
+  messages         Message[]
+  groupMembers     GroupMember[]
+  sessions         Session[]
+  
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model TelegramGroup {
+  id             String         @id @default(uuid())
+  telegramId     BigInt         @unique @map("telegram_id")
+  title          String
+  username       String?
+  description    String?
+  memberCount    Int            @default(0) @map("member_count")
+  isActive       Boolean        @default(true) @map("is_active")
+  botAddedAt     DateTime       @default(now()) @map("bot_added_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  
+  messages       Message[]
+  groupMembers   GroupMember[]
+  analytics      AnalyticsEvent[]
+  
+  @@map("telegram_groups")
+}
+
+model Message {
+  id                 String       @id @default(uuid())
+  telegramMessageId  BigInt       @map("telegram_message_id")
+  groupId            String       @map("group_id")
+  userId             String?      @map("user_id")
+  telegramUserId     BigInt       @map("telegram_user_id")
+  telegramUsername   String?      @map("telegram_username")
+  text               String?      @db.Text
+  messageType        String       @default("text") @map("message_type")
+  replyToMessageId   String?      @map("reply_to_message_id")
+  isEdited           Boolean      @default(false) @map("is_edited")
+  isDeleted          Boolean      @default(false) @map("is_deleted")
+  telegramDate       DateTime     @map("telegram_date")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  
+  group              TelegramGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user               User?         @relation(fields: [userId], references: [id])
+  attachments        Attachment[]
+  replyToMessage     Message?      @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies            Message[]     @relation("MessageReplies")
+  
+  @@unique([telegramMessageId, groupId])
+  @@index([groupId])
+  @@index([userId])
+  @@index([telegramDate])
+  @@map("messages")
+}
+
+model Attachment {
+  id            String   @id @default(uuid())
+  messageId     String   @map("message_id")
+  telegramFileId String  @map("telegram_file_id")
+  fileType      String   @map("file_type")
+  fileName      String?  @map("file_name")
+  fileSize      BigInt?  @map("file_size")
+  mimeType      String?  @map("mime_type")
+  storageUrl    String?  @map("storage_url") @db.Text
+  thumbnailUrl  String?  @map("thumbnail_url") @db.Text
+  width         Int?
+  height        Int?
+  duration      Int?
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  message       Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@index([messageId])
+  @@map("attachments")
+}
+
+model GroupMember {
+  id              String         @id @default(uuid())
+  groupId         String         @map("group_id")
+  userId          String         @map("user_id")
+  telegramUserId  BigInt         @map("telegram_user_id")
+  role            String         @default("member")
+  joinedAt        DateTime       @default(now()) @map("joined_at")
+  leftAt          DateTime?      @map("left_at")
+  isActive        Boolean        @default(true) @map("is_active")
+  
+  group           TelegramGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@map("group_members")
+}
+
+model AnalyticsEvent {
+  id         String        @id @default(uuid())
+  groupId    String        @map("group_id")
+  eventType  String        @map("event_type")
+  eventData  Json?         @map("event_data")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  
+  group      TelegramGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  @@index([groupId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
