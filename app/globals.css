@@ -63,4 +63,22 @@
   .font-hanuman {
     font-family: var(--font-hanuman);
   }
+  
+  /* Ensure visibility even if animations fail */
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  
+  /* Force visibility for debugging */
+  section {
+    display: block !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure text gradients work */
+  .bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
