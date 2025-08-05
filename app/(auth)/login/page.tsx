@@ -38,18 +38,17 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: demoUser.email,
         password: demoUser.password,
-        redirect: false,
+        callbackUrl: "/auth-success",
+        redirect: true,
       });
 
       if (result?.error) {
         setError(t('auth.invalidCredentials'));
-      } else {
-        router.push("/dashboard");
-        router.refresh();
+        setIsLoading(false);
       }
+      // Don't set loading to false here - let the redirect happen
     } catch (error) {
       setError(t('common.error'));
-    } finally {
       setIsLoading(false);
     }
   };
@@ -63,18 +62,17 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        callbackUrl: "/auth-success",
+        redirect: true,
       });
 
       if (result?.error) {
         setError(t('auth.invalidCredentials'));
-      } else {
-        router.push("/dashboard");
-        router.refresh();
+        setIsLoading(false);
       }
+      // Don't set loading to false here - let the redirect happen
     } catch (error) {
       setError(t('common.error'));
-    } finally {
       setIsLoading(false);
     }
   };
