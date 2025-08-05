@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Redirect Test - PLP Telegram Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .demo-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: opacity 0.2s;
+        }
+        .demo-button:hover {
+            opacity: 0.9;
+        }
+        .admin { background: linear-gradient(to right, #ef4444, #dc2626); }
+        .moderator { background: linear-gradient(to right, #3b82f6, #2563eb); }
+        .viewer { background: linear-gradient(to right, #10b981, #059669); }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #dbeafe; color: #1e40af; }
+        #results {
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Login Redirect Test</h1>
+        <p>This page tests the login functionality and verifies that users are properly redirected to the dashboard after successful authentication.</p>
+        
+        <div id="testStatus" class="status info">
+            Ready to test. Click any demo login button below.
+        </div>
+
+        <h3>🎭 Demo User Login Tests</h3>
+        <button class="demo-button admin" onclick="testLogin('admin@demo.com', 'admin123', 'Admin')">
+            👑 Test Admin Login
+        </button>
+        <button class="demo-button moderator" onclick="testLogin('moderator@demo.com', 'moderator123', 'Moderator')">
+            🛡️ Test Moderator Login  
+        </button>
+        <button class="demo-button viewer" onclick="testLogin('viewer@demo.com', 'viewer123', 'Viewer')">
+            👤 Test Viewer Login
+        </button>
+
+        <h3>📋 Test Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('testStatus');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addResult(message) {
+            const resultsEl = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsEl.textContent += `[${timestamp}] ${message}\n`;
+        }
+
+        async function testLogin(email, password, role) {
+            updateStatus(`Testing ${role} login...`, 'info');
+            addResult(`Starting ${role} login test with ${email}`);
+
+            try {
+                // Step 1: Get CSRF token
+                addResult('Step 1: Fetching CSRF token...');
+                const csrfResponse = await fetch('/api/auth/csrf');
+                const csrfData = await csrfResponse.json();
+                addResult(`CSRF token received: ${csrfData.csrfToken.substring(0, 20)}...`);
+
+                // Step 2: Attempt login
+                addResult('Step 2: Attempting authentication...');
+                const loginResponse = await fetch('/api/auth/callback/credentials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email,
+                        password,
+                        csrfToken: csrfData.csrfToken,
+                        callbackUrl: '/dashboard',
+                        json: 'true'
+                    }),
+                    redirect: 'manual'
+                });
+
+                addResult(`Login response status: ${loginResponse.status}`);
+                addResult(`Login response headers: ${JSON.stringify([...loginResponse.headers.entries()])}`);
+
+                if (loginResponse.status === 200) {
+                    const loginData = await loginResponse.json();
+                    addResult(`Login successful! Response: ${JSON.stringify(loginData)}`);
+                    
+                    // Step 3: Test dashboard access
+                    addResult('Step 3: Testing dashboard access...');
+                    const dashboardResponse = await fetch('/dashboard', {
+                        redirect: 'manual'
+                    });
+                    
+                    if (dashboardResponse.status === 200) {
+                        addResult('✅ SUCCESS: Dashboard accessible after login');
+                        updateStatus(`${role} login test PASSED! ✅`, 'success');
+                    } else {
+                        addResult(`❌ Dashboard access failed: ${dashboardResponse.status}`);
+                        updateStatus(`${role} dashboard access FAILED`, 'error');
+                    }
+
+                } else if (loginResponse.status === 302) {
+                    const location = loginResponse.headers.get('Location');
+                    addResult(`Redirect to: ${location}`);
+                    
+                    if (location && location.includes('/dashboard')) {
+                        addResult('✅ SUCCESS: Proper redirect to dashboard');
+                        updateStatus(`${role} login test PASSED! ✅`, 'success');
+                    } else if (location && location.includes('error')) {
+                        addResult('❌ ERROR: Redirected to error page');
+                        updateStatus(`${role} login FAILED - Authentication error`, 'error');
+                    } else {
+                        addResult(`⚠️ WARNING: Unexpected redirect to ${location}`);
+                        updateStatus(`${role} login had unexpected redirect`, 'error');
+                    }
+                } else {
+                    const errorText = await loginResponse.text();
+                    addResult(`❌ Login failed: ${errorText}`);
+                    updateStatus(`${role} login FAILED`, 'error');
+                }
+
+            } catch (error) {
+                addResult(`❌ Test error: ${error.message}`);
+                updateStatus(`${role} test ERROR: ${error.message}`, 'error');
+            }
+
+            addResult('---');
+        }
+
+        // Add some initial information
+        addResult('Login Redirect Test initialized');
+        addResult(`Testing on: ${window.location.origin}`);
+        addResult('Ready to test demo user logins');
+        addResult('---');
+    </script>
+</body>
+</html>

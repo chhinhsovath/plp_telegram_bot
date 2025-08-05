@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug - PLP Telegram Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .test-btn:hover { background: #2563eb; }
+        .error { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #dcfce7; color: #166534; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .info { background: #dbeafe; color: #1e40af; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        #log {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Auth Debug Tool</h1>
+        <div id="status" class="info">Ready to debug authentication issues</div>
+        
+        <div>
+            <button class="test-btn" onclick="testSession()">Check Session</button>
+            <button class="test-btn" onclick="testCSRF()">Get CSRF Token</button>
+            <button class="test-btn" onclick="testAdminLogin()">Test Admin Login</button>
+            <button class="test-btn" onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.textContent += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = type;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        async function testSession() {
+            log('Testing session endpoint...');
+            try {
+                const response = await fetch('/api/auth/session');
+                const data = await response.json();
+                log(`Session Response (${response.status}): ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.user) {
+                    setStatus(`Logged in as: ${data.user.email} (${data.user.role})`, 'success');
+                } else {
+                    setStatus('No active session', 'info');
+                }
+            } catch (error) {
+                log(`Session Error: ${error.message}`);
+                setStatus('Session check failed', 'error');
+            }
+        }
+
+        async function testCSRF() {
+            log('Getting CSRF token...');
+            try {
+                const response = await fetch('/api/auth/csrf');
+                const data = await response.json();
+                log(`CSRF Response (${response.status}): ${JSON.stringify(data, null, 2)}`);
+                window.csrfToken = data.csrfToken;
+                setStatus('CSRF token retrieved', 'success');
+            } catch (error) {
+                log(`CSRF Error: ${error.message}`);
+                setStatus('CSRF failed', 'error');
+            }
+        }
+
+        async function testAdminLogin() {
+            if (!window.csrfToken) {
+                await testCSRF();
+            }
+
+            log('Attempting admin login...');
+            setStatus('Logging in...', 'info');
+
+            try {
+                // Test the credentials endpoint
+                const loginResponse = await fetch('/api/auth/callback/credentials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email: 'admin@demo.com',
+                        password: 'admin123',
+                        csrfToken: window.csrfToken,
+                        callbackUrl: '/dashboard',
+                        json: 'true'
+                    }),
+                    credentials: 'include'
+                });
+
+                log(`Login Response Status: ${loginResponse.status}`);
+                log(`Login Response Headers: ${JSON.stringify([...loginResponse.headers.entries()])}`);
+
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    log(`Login Data: ${JSON.stringify(loginData, null, 2)}`);
+                    
+                    if (loginData.url) {
+                        log(`Redirect URL: ${loginData.url}`);
+                        setStatus('Login successful! Checking session...', 'success');
+                        
+                        // Wait a moment then check session
+                        setTimeout(testSession, 1000);
+                    } else if (loginData.error) {
+                        log(`Login Error: ${loginData.error}`);
+                        setStatus(`Login failed: ${loginData.error}`, 'error');
+                    }
+                } else {
+                    const errorText = await loginResponse.text();
+                    log(`Login Failed: ${errorText}`);
+                    setStatus('Login failed', 'error');
+                }
+
+            } catch (error) {
+                log(`Login Exception: ${error.message}`);
+                setStatus('Login error', 'error');
+            }
+        }
+
+        // Initialize
+        log('Auth Debug Tool initialized');
+        log('Click buttons above to test authentication flow');
+        testSession();
+    </script>
+</body>
+</html>
