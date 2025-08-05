@@ -28,5 +28,19 @@ git push -u origin main
 
 DATABASE_URL=postgresql://user:password@host:port/database?schema=public
 NEXTAUTH_URL=telebot.openplp.com
+NEXTAUTH_SECRET=FdqSt9sEmMFnsBvzyKxh424wrhLccMtoJmS4V838/jM=
 TELEGRAM_BOT_TOKEN=8307675454:AAFDatyf-qU-OnQOTZsMXZJkCjI9smT3_ho
 TELEGRAM_WEBHOOK_SECRET=FdqSt9sEmMFnsBvzyKxh424wrhLccMtoJmS4V838/jM=
+
+
+AI_GATEWAY_API_KEY="FbrBSsoE583yFYjDyaLZEvwg"
+
+
+
+  👥 Demo Users Ready
+
+  | Role          | Email              | Password     |
+  |---------------|--------------------|--------------|
+  | 👑 Admin      | admin@demo.com     | admin123     |
+  | 🛡️ Moderator | moderator@demo.com | moderator123 |
+  | 👤 Viewer     | viewer@demo.com    | viewer123    |
