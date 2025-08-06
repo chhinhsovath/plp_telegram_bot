@@ -1,24 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AnimatedCard } from "@/components/ui/animated-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
+  Search, 
+  Filter, 
+  Download, 
   Image as ImageIcon, 
   Video, 
-  FileText, 
-  Download, 
-  Grid3x3, 
+  FileText,
+  Eye,
+  Loader2,
+  Grid3X3,
   List,
-  Search,
   Calendar,
-  Filter
+  HardDrive,
+  Play,
+  Maximize2,
+  X
 } from "lucide-react";
-import { PhotoThumbnail } from "@/components/PhotoThumbnail";
-import { MediaAttachment } from "@/components/MediaAttachment";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -26,208 +30,147 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format, formatDistanceToNow } from "date-fns";
+import { PhotoThumbnail } from "@/components/PhotoThumbnail";
+import { animations, colors } from "@/lib/design-system";
+import { cn } from "@/lib/utils";
 
 interface MediaGalleryProps {
   initialMedia: any[];
   groups: any[];
-  stats: any;
+  stats: any[];
   totalSize: bigint;
 }
 
 export default function MediaGallery({ initialMedia, groups, stats, totalSize }: MediaGalleryProps) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedGroup, setSelectedGroup] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [mediaItems] = useState(initialMedia);
+  const [selectedGroup, setSelectedGroup] = useState("all");
+  const [mediaType, setMediaType] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [hoveredMedia, setHoveredMedia] = useState<string | null>(null);
 
-  const mediaTypes = {
-    photo: { icon: ImageIcon, label: "Photos", color: "text-blue-500" },
-    video: { icon: Video, label: "Videos", color: "text-purple-500" },
-    document: { icon: FileText, label: "Documents", color: "text-green-500" },
-  };
-
-  const filteredMedia = mediaItems.filter(item => {
-    const matchesGroup = selectedGroup === "all" || item.message.groupId === selectedGroup;
+  const filteredMedia = initialMedia.filter(attachment => {
     const matchesSearch = !searchQuery || 
-      item.fileName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.message.text?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGroup && matchesSearch;
+      attachment.fileName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      attachment.message?.text?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesGroup = selectedGroup === "all" || 
+      attachment.message?.groupId === selectedGroup;
+    
+    const matchesType = mediaType === "all" || 
+      attachment.fileType === mediaType;
+    
+    return matchesSearch && matchesGroup && matchesType;
   });
 
-  const getMediaByType = (type: string) => {
-    return type === 'all' ? filteredMedia : filteredMedia.filter(item => item.fileType === type);
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const renderGridView = (items: any[]) => {
-    if (items.length === 0) {
-      return (
-        <div className="text-center py-12">
-          <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-          <h3 className="text-lg font-semibold mb-2">No media files found</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Try adjusting your filters or search query
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.map((item) => (
-          <div key={item.id} className="relative group">
-            {item.fileType === 'photo' ? (
-              <PhotoThumbnail
-                attachment={item}
-                size="medium"
-                showHoverPreview={true}
-              />
-            ) : (
-              <MediaAttachment
-                attachment={item}
-                className="h-32 w-full"
-              />
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <p className="text-xs truncate">{item.fileName || 'Untitled'}</p>
-              <p className="text-xs">{format(new Date(item.createdAt), 'MMM d, yyyy')}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+  const getMediaIcon = (type: string) => {
+    const iconMap = {
+      photo: { icon: ImageIcon, color: "text-green-500", bg: "bg-green-500/10" },
+      video: { icon: Video, color: "text-blue-500", bg: "bg-blue-500/10" },
+      document: { icon: FileText, color: "text-purple-500", bg: "bg-purple-500/10" },
+    };
+    return iconMap[type as keyof typeof iconMap] || iconMap.document;
   };
 
-  const renderListView = (items: any[]) => {
-    if (items.length === 0) {
-      return (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No media files found</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Try adjusting your filters or search query
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-            <div className="flex-shrink-0 mr-4">
-              {item.fileType === 'photo' ? (
-                <PhotoThumbnail
-                  attachment={item}
-                  size="small"
-                  showHoverPreview={false}
-                />
-              ) : item.fileType === 'video' ? (
-                <Video className="h-10 w-10 text-purple-500" />
-              ) : (
-                <FileText className="h-10 w-10 text-green-500" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{item.fileName || 'Untitled'}</p>
-              <p className="text-sm text-gray-500">
-                {item.message.group.title} • {format(new Date(item.createdAt), 'MMM d, yyyy h:mm a')}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">
-                {item.fileSize ? `${(Number(item.fileSize) / 1024).toFixed(1)} KB` : 'Unknown size'}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.open(item.storageUrl || `/api/files/${item.id}`, '_blank')}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+  const mediaStats = {
+    photos: stats.find(s => s.fileType === 'photo')?._count || 0,
+    videos: stats.find(s => s.fileType === 'video')?._count || 0,
+    documents: stats.find(s => s.fileType === 'document')?._count || 0,
+    totalSize: formatFileSize(Number(totalSize)),
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Media Gallery</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            All photos, videos, and documents from your groups
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-          >
-            <Grid3x3 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {Object.entries(mediaTypes).map(([type, config]) => {
-          const count = stats.find((s: any) => s.fileType === type)?._count || 0;
-          return (
-            <Card key={type}>
-              <CardContent className="flex items-center justify-between p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {config.label}
-                  </p>
-                  <p className="text-2xl font-bold">{count}</p>
-                </div>
-                <config.icon className={`h-8 w-8 ${config.color}`} />
-              </CardContent>
-            </Card>
-          );
-        })}
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Size
-              </p>
-              <p className="text-2xl font-bold">
-                {(Number(totalSize) / (1024 * 1024)).toFixed(2)} MB
-              </p>
+    <>
+      <motion.div
+        initial="initial"
+        animate="animate"
+        variants={animations.pageTransition}
+        className="space-y-8"
+      >
+        <PageHeader
+          title="Media Gallery"
+          description="Browse all media files collected from your groups"
+          icon={<ImageIcon className="w-6 h-6" />}
+          actions={
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export All
+              </motion.button>
             </div>
-            <Download className="h-8 w-8 text-gray-500" />
-          </CardContent>
-        </Card>
-      </div>
+          }
+        />
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px] relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        {/* Stats Overview */}
+        <motion.div
+          variants={animations.staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid gap-4 md:grid-cols-4"
+        >
+          {[
+            { label: "Photos", value: mediaStats.photos.toLocaleString(), icon: ImageIcon, color: "green" },
+            { label: "Videos", value: mediaStats.videos.toLocaleString(), icon: Video, color: "blue" },
+            { label: "Documents", value: mediaStats.documents.toLocaleString(), icon: FileText, color: "purple" },
+            { label: "Total Size", value: mediaStats.totalSize, icon: HardDrive, color: "pink" },
+          ].map((stat, index) => (
+            <motion.div key={stat.label} variants={animations.staggerItem} custom={index}>
+              <AnimatedCard variant="glass" className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  </div>
+                  <motion.div 
+                    className={`p-3 rounded-lg bg-${stat.color}-500/10`}
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <stat.icon className={`w-5 h-5 text-${stat.color}-500`} />
+                  </motion.div>
+                </div>
+              </AnimatedCard>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Search and Filters */}
+        <AnimatedCard variant="glass" className="p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                type="text"
-                placeholder="Search by filename..."
-                className="pl-10"
+                placeholder="Search media files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 bg-white/5 border-white/10 focus:border-purple-500 transition-colors"
               />
             </div>
+            
             <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select group" />
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/10">
+                <SelectValue placeholder="All Groups" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Groups</SelectItem>
@@ -238,55 +181,291 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              Date Range
-            </Button>
+
+            <Select value={mediaType} onValueChange={setMediaType}>
+              <SelectTrigger className="w-[150px] bg-white/5 border-white/10">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="photo">Photos</SelectItem>
+                <SelectItem value="video">Videos</SelectItem>
+                <SelectItem value="document">Documents</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+        </AnimatedCard>
 
-      {/* Media Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All Media ({filteredMedia.length})</TabsTrigger>
-          <TabsTrigger value="photo">Photos ({getMediaByType('photo').length})</TabsTrigger>
-          <TabsTrigger value="video">Videos ({getMediaByType('video').length})</TabsTrigger>
-          <TabsTrigger value="document">Documents ({getMediaByType('document').length})</TabsTrigger>
-        </TabsList>
+        {/* Media Grid/List */}
+        <motion.div
+          variants={animations.staggerContainer}
+          initial="initial"
+          animate="animate"
+          className={cn(
+            viewMode === "grid" 
+              ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+              : "space-y-4"
+          )}
+        >
+          {filteredMedia.length === 0 ? (
+            <AnimatedCard variant="glass" className="col-span-full p-12 text-center">
+              <ImageIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <p className="text-lg font-semibold mb-2">No media found</p>
+              <p className="text-gray-500">Try adjusting your search criteria</p>
+            </AnimatedCard>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredMedia.map((attachment: any, index: number) => {
+                const mediaIcon = getMediaIcon(attachment.fileType);
+                const IconComponent = mediaIcon.icon;
+                
+                return (
+                  <motion.div
+                    key={attachment.id}
+                    layout
+                    variants={animations.staggerItem}
+                    custom={index}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onHoverStart={() => setHoveredMedia(attachment.id)}
+                    onHoverEnd={() => setHoveredMedia(null)}
+                    onClick={() => setSelectedMedia(attachment)}
+                  >
+                    {viewMode === "grid" ? (
+                      <AnimatedCard 
+                        variant="glass" 
+                        className="relative overflow-hidden cursor-pointer group"
+                        hover={true}
+                      >
+                        <div className="aspect-square relative">
+                          {attachment.fileType === "photo" ? (
+                            <>
+                              <PhotoThumbnail
+                                src={attachment.thumbnailUrl || attachment.storageUrl}
+                                alt={attachment.fileName || "Image"}
+                                className="w-full h-full object-cover"
+                              />
+                              <motion.div
+                                className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
+                                animate={{
+                                  opacity: hoveredMedia === attachment.id ? 1 : 0,
+                                }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            </>
+                          ) : attachment.fileType === "video" ? (
+                            <div className="w-full h-full bg-gray-900 flex items-center justify-center relative">
+                              {attachment.thumbnailUrl && (
+                                <PhotoThumbnail
+                                  src={attachment.thumbnailUrl}
+                                  alt={attachment.fileName || "Video"}
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                />
+                              )}
+                              <motion.div
+                                className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                                animate={{
+                                  opacity: hoveredMedia === attachment.id ? 0.8 : 0.5,
+                                }}
+                              >
+                                <Play className="w-12 h-12 text-white" />
+                              </motion.div>
+                            </div>
+                          ) : (
+                            <div className={`w-full h-full ${mediaIcon.bg} flex items-center justify-center`}>
+                              <IconComponent className={`w-12 h-12 ${mediaIcon.color}`} />
+                            </div>
+                          )}
+                          
+                          {/* Hover Actions */}
+                          <motion.div
+                            className="absolute inset-0 flex items-center justify-center gap-2 p-4"
+                            animate={{
+                              opacity: hoveredMedia === attachment.id ? 1 : 0,
+                            }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 bg-white/90 rounded-full text-gray-800 shadow-lg"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedMedia(attachment);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 bg-white/90 rounded-full text-gray-800 shadow-lg"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Download logic
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </motion.button>
+                          </motion.div>
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="p-3 space-y-1">
+                          <p className="text-sm font-medium truncate">
+                            {attachment.fileName || "Unnamed file"}
+                          </p>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{formatFileSize(attachment.fileSize || 0)}</span>
+                            <span>{formatDistanceToNow(new Date(attachment.createdAt), { addSuffix: true })}</span>
+                          </div>
+                        </div>
+                      </AnimatedCard>
+                    ) : (
+                      <AnimatedCard variant="glass" className="p-4 cursor-pointer" hover={true}>
+                        <div className="flex items-center gap-4">
+                          <motion.div
+                            className={`p-3 rounded-lg ${mediaIcon.bg}`}
+                            whileHover={{ rotate: 360 }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <IconComponent className={`w-6 h-6 ${mediaIcon.color}`} />
+                          </motion.div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">
+                              {attachment.fileName || "Unnamed file"}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <span>{formatFileSize(attachment.fileSize || 0)}</span>
+                              <span>•</span>
+                              <span>{attachment.message?.group?.title || "Unknown Group"}</span>
+                              <span>•</span>
+                              <span>{formatDistanceToNow(new Date(attachment.createdAt), { addSuffix: true })}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedMedia(attachment);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Download logic
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </motion.button>
+                          </div>
+                        </div>
+                      </AnimatedCard>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          )}
+        </motion.div>
+      </motion.div>
 
-        <TabsContent value="all">
-          <Card>
-            <CardContent className="p-6">
-              {viewMode === 'grid' ? renderGridView(filteredMedia) : renderListView(filteredMedia)}
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Media Viewer Modal */}
+      <AnimatePresence>
+        {selectedMedia && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setSelectedMedia(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/60 to-transparent z-10">
+                <div className="flex items-center justify-between">
+                  <div className="text-white">
+                    <p className="font-medium">{selectedMedia.fileName || "Unnamed file"}</p>
+                    <p className="text-sm opacity-75">
+                      {formatFileSize(selectedMedia.fileSize || 0)} • 
+                      {selectedMedia.message?.group?.title || "Unknown Group"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                    >
+                      <Download className="w-5 h-5" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                    >
+                      <Maximize2 className="w-5 h-5" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedMedia(null)}
+                      className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
 
-        <TabsContent value="photo">
-          <Card>
-            <CardContent className="p-6">
-              {renderGridView(getMediaByType('photo'))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="video">
-          <Card>
-            <CardContent className="p-6">
-              {viewMode === 'grid' ? renderGridView(getMediaByType('video')) : renderListView(getMediaByType('video'))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="document">
-          <Card>
-            <CardContent className="p-6">
-              {renderListView(getMediaByType('document'))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+              {/* Content */}
+              <div className="flex items-center justify-center p-16 min-h-[400px]">
+                {selectedMedia.fileType === "photo" ? (
+                  <img
+                    src={selectedMedia.storageUrl}
+                    alt={selectedMedia.fileName || "Image"}
+                    className="max-w-full max-h-[70vh] object-contain"
+                  />
+                ) : selectedMedia.fileType === "video" ? (
+                  <video
+                    src={selectedMedia.storageUrl}
+                    controls
+                    className="max-w-full max-h-[70vh]"
+                  />
+                ) : (
+                  <div className="text-center text-white">
+                    <FileText className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">{selectedMedia.fileName}</p>
+                    <p className="text-sm opacity-75">{selectedMedia.mimeType}</p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+                    >
+                      Download File
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
