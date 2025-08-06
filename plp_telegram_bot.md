@@ -26,7 +26,6 @@ git branch -M main
 git push -u origin main
 
 
-DATABASE_URL=postgresql://user:password@host:port/database?schema=public
 NEXTAUTH_URL=telebot.openplp.com
 NEXTAUTH_SECRET=FdqSt9sEmMFnsBvzyKxh424wrhLccMtoJmS4V838/jM=
 TELEGRAM_BOT_TOKEN=8307675454:AAFDatyf-qU-OnQOTZsMXZJkCjI9smT3_ho
