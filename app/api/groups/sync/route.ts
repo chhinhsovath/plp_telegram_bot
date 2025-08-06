@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
 
     let syncedCount = 0;
     let errorCount = 0;
-    const errors: string[] = [];
+    let inactiveCount = 0;
+    const errors: { group: string; error: string; action: string }[] = [];
+    const syncedGroups: string[] = [];
+    const inactiveGroups: string[] = [];
 
     // Update each group's information
     for (const group of groups) {
@@ -54,19 +57,34 @@ export async function POST(req: NextRequest) {
           });
           
           syncedCount++;
+          syncedGroups.push(group.title);
         }
       } catch (error: any) {
+        const errorMessage = error.message || 'Unknown error';
+        
         // If we get a "chat not found" or "bot was kicked" error, mark as inactive
-        if (error.message?.includes('chat not found') || 
-            error.message?.includes('bot was kicked') ||
-            error.message?.includes('bot is not a member')) {
+        if (errorMessage.includes('chat not found') || 
+            errorMessage.includes('bot was kicked') ||
+            errorMessage.includes('bot is not a member') ||
+            errorMessage.includes('CHAT_ID_INVALID')) {
           await prisma.telegramGroup.update({
             where: { id: group.id },
             data: { isActive: false }
           });
+          inactiveCount++;
+          inactiveGroups.push(group.title);
+          errors.push({
+            group: group.title,
+            error: 'Bot no longer has access to this group',
+            action: 'Marked as inactive'
+          });
         } else {
           errorCount++;
-          errors.push(`Failed to sync ${group.title}: ${error.message}`);
+          errors.push({
+            group: group.title,
+            error: errorMessage,
+            action: 'Sync failed'
+          });
         }
       }
     }
@@ -75,8 +93,11 @@ export async function POST(req: NextRequest) {
       success: true,
       syncedCount,
       errorCount,
+      inactiveCount,
+      syncedGroups: syncedGroups.slice(0, 5),
+      inactiveGroups: inactiveGroups.slice(0, 5),
       errors: errors.slice(0, 5), // Return first 5 errors only
-      message: `Synced ${syncedCount} groups successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`
+      message: `Synced ${syncedCount} groups${inactiveCount > 0 ? `, ${inactiveCount} marked inactive` : ''}${errorCount > 0 ? `, ${errorCount} errors` : ''}`
     });
 
   } catch (error) {
