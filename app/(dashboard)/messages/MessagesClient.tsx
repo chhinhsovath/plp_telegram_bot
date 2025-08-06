@@ -16,6 +16,7 @@ import {
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups } from "@/hooks/useGroups";
 import { format } from "date-fns";
+import { PhotoThumbnail } from "@/components/PhotoThumbnail";
 
 export default function MessagesClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -188,25 +189,32 @@ export default function MessagesClient() {
                         {message.text || `[${message.messageType}]`}
                       </p>
                       {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-2 flex gap-2 flex-wrap">
                           {message.attachments.map((attachment: any) => (
-                            <a
-                              key={attachment.id}
-                              href={`/api/files/${attachment.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <div className="h-20 w-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                {attachment.fileType === 'photo' ? (
-                                  <ImageIcon className="h-8 w-8 text-gray-400" />
-                                ) : attachment.fileType === 'video' ? (
-                                  <Video className="h-8 w-8 text-gray-400" />
-                                ) : (
-                                  <FileText className="h-8 w-8 text-gray-400" />
-                                )}
-                              </div>
-                            </a>
+                            attachment.fileType === 'photo' ? (
+                              <PhotoThumbnail
+                                key={attachment.id}
+                                attachment={attachment}
+                                size="small"
+                                showHoverPreview={true}
+                              />
+                            ) : (
+                              <a
+                                key={attachment.id}
+                                href={`/api/files/${attachment.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                <div className="h-20 w-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                  {attachment.fileType === 'video' ? (
+                                    <Video className="h-8 w-8 text-gray-400" />
+                                  ) : (
+                                    <FileText className="h-8 w-8 text-gray-400" />
+                                  )}
+                                </div>
+                              </a>
+                            )
                           ))}
                         </div>
                       )}
