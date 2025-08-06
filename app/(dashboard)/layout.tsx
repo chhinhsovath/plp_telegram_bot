@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import DashboardNav from "@/components/layout/DashboardNav";
 import DashboardSidebar from "@/components/layout/DashboardSidebar";
-import { GradientBackground } from "@/components/ui/gradient-background";
+import { minimal, animations } from "@/lib/design-system";
 
 export default function DashboardLayout({
   children,
@@ -19,35 +19,33 @@ export default function DashboardLayout({
   };
 
   return (
-    <GradientBackground variant="mesh">
+    <div className={minimal.container}>
       <div className="flex h-screen">
         <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
           <DashboardSidebar />
         </motion.div>
         
         <div className="flex-1 flex flex-col overflow-hidden">
           <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
           >
             <DashboardNav user={mockUser} />
           </motion.div>
           
           <motion.main
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
+            {...animations.pageTransition}
             className="flex-1 overflow-y-auto p-6"
           >
             {children}
           </motion.main>
         </div>
       </div>
-    </GradientBackground>
+    </div>
   );
 }

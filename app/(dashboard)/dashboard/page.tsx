@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AnimatedCard } from "@/components/ui/animated-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { MessageSquare, Users, FolderOpen, TrendingUp, Activity, ArrowUp, ArrowDown, Zap } from "lucide-react";
-import { animations, colors } from "@/lib/design-system";
+import { MessageSquare, Users, FolderOpen, TrendingUp, Activity, ArrowUp, ArrowDown } from "lucide-react";
+import { animations, minimal } from "@/lib/design-system";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface DashboardStats {
@@ -61,7 +60,6 @@ export default function DashboardPage() {
       value: stats?.groupCount || 0,
       change: calculateChange(stats?.groupCount || 0, stats?.previousStats?.groupCount),
       icon: Users,
-      color: "purple",
       description: "Active Telegram groups",
     },
     {
@@ -69,7 +67,6 @@ export default function DashboardPage() {
       value: stats?.messageCount || 0,
       change: calculateChange(stats?.messageCount || 0, stats?.previousStats?.messageCount),
       icon: MessageSquare,
-      color: "blue",
       description: "Messages collected",
     },
     {
@@ -77,7 +74,6 @@ export default function DashboardPage() {
       value: stats?.attachmentCount || 0,
       change: calculateChange(stats?.attachmentCount || 0, stats?.previousStats?.attachmentCount),
       icon: FolderOpen,
-      color: "pink",
       description: "Photos & attachments",
     },
     {
@@ -85,106 +81,78 @@ export default function DashboardPage() {
       value: stats?.userCount || 0,
       change: calculateChange(stats?.userCount || 0, stats?.previousStats?.userCount),
       icon: TrendingUp,
-      color: "purple",
       description: "Registered users",
     },
   ];
 
   return (
     <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={animations.pageTransition}
-      className="space-y-8"
+      {...animations.pageTransition}
+      className="space-y-6"
     >
-      <PageHeader
-        title="Dashboard"
-        description="Overview of your Telegram groups and messages"
-        icon={<Activity className="w-6 h-6" />}
-        actions={
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300"
-          >
-            <span className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              Quick Actions
-            </span>
-          </motion.button>
-        }
-      />
+      <div className="mb-6">
+        <h1 className={cn("text-2xl font-semibold mb-2", minimal.heading)}>Dashboard</h1>
+        <p className={minimal.textSecondary}>Overview of your Telegram groups and messages</p>
+      </div>
 
       {/* Stats Grid */}
       <motion.div
         variants={animations.staggerContainer}
         initial="initial"
         animate="animate"
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.title}
             variants={animations.staggerItem}
-            custom={index}
+            whileHover={animations.cardHover}
           >
-            <AnimatedCard variant="glass" className="p-6 relative overflow-hidden">
-              {/* Background gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br from-${stat.color}-600/10 to-transparent`} />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-gradient-to-br from-${stat.color}-600 to-${stat.color}-700 text-white`}>
-                    <stat.icon className="w-5 h-5" />
-                  </div>
-                  {stat.change !== 0 && (
-                    <div className={`flex items-center gap-1 text-sm ${stat.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {stat.change > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                      {Math.abs(stat.change).toFixed(1)}%
-                    </div>
-                  )}
+            <div className={cn(minimal.card, minimal.cardHover, "p-6")}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 rounded-lg bg-blue-600 text-white">
+                  <stat.icon className="w-5 h-5" />
                 </div>
-                
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</h3>
-                <p className="text-2xl font-bold mt-1">
-                  {loading ? (
-                    <motion.span
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="inline-block w-20 h-8 bg-gray-200 dark:bg-gray-700 rounded"
-                    />
-                  ) : (
-                    stat.value.toLocaleString()
-                  )}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{stat.description}</p>
+                {stat.change !== 0 && (
+                  <div className={`flex items-center gap-1 text-sm ${
+                    stat.change > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stat.change > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                    {Math.abs(stat.change).toFixed(1)}%
+                  </div>
+                )}
               </div>
-            </AnimatedCard>
+              
+              <h3 className={cn("text-sm font-medium mb-1", minimal.textSecondary)}>{stat.title}</h3>
+              <p className={cn("text-2xl font-semibold", minimal.heading)}>
+                {loading ? (
+                  <span className="inline-block w-20 h-8 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  stat.value.toLocaleString()
+                )}
+              </p>
+              <p className={cn("text-xs mt-1", minimal.textMuted)}>{stat.description}</p>
+            </div>
           </motion.div>
         ))}
       </motion.div>
 
       {/* Activity Chart */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
         className="grid gap-6 lg:grid-cols-3"
       >
         {/* Recent Activity */}
         <div className="lg:col-span-2">
-          <AnimatedCard variant="glass" className="p-6">
+          <div className={cn(minimal.card, "p-6")}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold">Recent Messages</h3>
-              <motion.span
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="flex items-center gap-2 text-sm text-green-500"
-              >
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
+              <h3 className={cn("text-lg font-semibold", minimal.heading)}>Recent Messages</h3>
+              <span className="flex items-center gap-2 text-sm text-green-600">
+                <span className="w-2 h-2 bg-green-600 rounded-full" />
                 Live
-              </motion.span>
+              </span>
             </div>
 
             {loading ? (
@@ -199,8 +167,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : !stats?.recentMessages || stats.recentMessages.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <div className={cn("text-center py-12", minimal.textMuted)}>
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-30" />
                 <p>No messages yet. Add the bot to a Telegram group to start collecting messages.</p>
               </div>
             ) : (
@@ -208,28 +176,28 @@ export default function DashboardPage() {
                 {stats?.recentMessages?.map((message, index) => (
                   <motion.div
                     key={message.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ x: 5 }}
-                    className="flex items-start gap-4 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={animations.cardHover}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <div className="p-2 rounded-full bg-gradient-to-br from-purple-600 to-pink-600">
-                      <MessageSquare className="w-4 h-4 text-white" />
+                    <div className="p-2 rounded-full bg-blue-600">
+                      <MessageSquare className="w-3 h-3 text-white" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="font-medium text-sm">
+                        <p className={cn("font-medium text-sm truncate", minimal.text)}>
                           {message.user?.name || message.telegramUsername || "Unknown User"}
                         </p>
-                        <span className="text-xs text-gray-500">
+                        <span className={cn("text-xs whitespace-nowrap ml-2", minimal.textMuted)}>
                           {format(new Date(message.createdAt), "HH:mm")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      <p className={cn("text-sm line-clamp-2", minimal.textSecondary)}>
                         {message.text || `[${message.messageType}]`}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className={cn("text-xs mt-1", minimal.textMuted)}>
                         {message.group.title}
                       </p>
                     </div>
@@ -237,55 +205,55 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-          </AnimatedCard>
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="space-y-6">
-          <AnimatedCard variant="gradient" className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Today&apos;s Activity</h3>
+          <div className={cn(minimal.card, "p-6")}>
+            <h3 className={cn("text-lg font-semibold mb-4", minimal.heading)}>Today&apos;s Activity</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Messages</span>
-                <span className="font-semibold">0</span>
+                <span className={cn("text-sm", minimal.textSecondary)}>Messages</span>
+                <span className={cn("font-semibold", minimal.text)}>0</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Active Users</span>
-                <span className="font-semibold">0</span>
+                <span className={cn("text-sm", minimal.textSecondary)}>Active Users</span>
+                <span className={cn("font-semibold", minimal.text)}>0</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Media Uploads</span>
-                <span className="font-semibold">0</span>
+                <span className={cn("text-sm", minimal.textSecondary)}>Media Uploads</span>
+                <span className={cn("font-semibold", minimal.text)}>0</span>
               </div>
             </div>
-          </AnimatedCard>
+          </div>
 
-          <AnimatedCard variant="glass" className="p-6">
-            <h3 className="text-lg font-semibold mb-4">System Status</h3>
+          <div className={cn(minimal.card, "p-6")}>
+            <h3 className={cn("text-lg font-semibold mb-4", minimal.heading)}>System Status</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Bot Status</span>
-                <span className="flex items-center gap-2 text-sm text-green-500">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className={cn("text-sm", minimal.textSecondary)}>Bot Status</span>
+                <span className="flex items-center gap-2 text-sm text-green-600">
+                  <span className="w-2 h-2 bg-green-600 rounded-full" />
                   Online
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Database</span>
-                <span className="flex items-center gap-2 text-sm text-green-500">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className={cn("text-sm", minimal.textSecondary)}>Database</span>
+                <span className="flex items-center gap-2 text-sm text-green-600">
+                  <span className="w-2 h-2 bg-green-600 rounded-full" />
                   Connected
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">API</span>
-                <span className="flex items-center gap-2 text-sm text-green-500">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className={cn("text-sm", minimal.textSecondary)}>API</span>
+                <span className="flex items-center gap-2 text-sm text-green-600">
+                  <span className="w-2 h-2 bg-green-600 rounded-full" />
                   Operational
                 </span>
               </div>
             </div>
-          </AnimatedCard>
+          </div>
         </div>
       </motion.div>
     </motion.div>

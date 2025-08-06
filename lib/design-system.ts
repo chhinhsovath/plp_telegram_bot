@@ -1,42 +1,30 @@
-// Unified Design System for PLP Telegram Bot
+// Minimal Professional Design System for PLP Telegram Bot
 
-// Color Palette - Using a modern purple, blue, and pink gradient theme
+// Clean Color Palette - Using subtle grays and blue accents
 export const colors = {
   primary: {
-    50: '#faf5ff',
-    100: '#f3e8ff',
-    200: '#e9d5ff',
-    300: '#d8b4fe',
-    400: '#c084fc',
-    500: '#a855f7', // Main primary
-    600: '#9333ea',
-    700: '#7c3aed',
-    800: '#6b21a8',
-    900: '#581c87',
-  },
-  secondary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6', // Main secondary
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b', // Main primary - subtle gray
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#0f172a',
   },
   accent: {
-    50: '#fdf2f8',
-    100: '#fce7f3',
-    200: '#fbcfe8',
-    300: '#f9a8d4',
-    400: '#f472b6',
-    500: '#ec4899', // Main accent
-    600: '#db2777',
-    700: '#be185d',
-    800: '#9d174d',
-    900: '#831843',
+    50: '#f0f9ff',
+    100: '#e0f2fe',
+    200: '#bae6fd',
+    300: '#7dd3fc',
+    400: '#38bdf8',
+    500: '#0ea5e9', // Clean blue accent
+    600: '#0284c7',
+    700: '#0369a1',
+    800: '#075985',
+    900: '#0c4a6e',
   },
   gray: {
     50: '#f9fafb',
@@ -49,128 +37,70 @@ export const colors = {
     700: '#374151',
     800: '#1f2937',
     900: '#111827',
-    950: '#030712',
   },
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
+  success: '#059669',
+  warning: '#d97706',
+  error: '#dc2626',
+  info: '#0ea5e9',
 };
 
-// Animation Variants for Framer Motion
+// Subtle Animation Variants - Reduced for better user experience
 export const animations = {
-  // Page transitions
+  // Gentle page transitions
   pageTransition: {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.2 },
   },
   
-  // Stagger children animations
+  // Simple stagger
   staggerContainer: {
-    initial: { opacity: 0 },
+    initial: {},
     animate: {
-      opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
+        staggerChildren: 0.05,
       },
     },
   },
   
   staggerItem: {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
-  },
-  
-  // Card animations
-  cardHover: {
-    scale: 1.02,
-    transition: { duration: 0.2 },
-  },
-  
-  // Fade animations
-  fadeIn: {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
-    transition: { duration: 0.4 },
-  },
-  
-  // Scale animations
-  scaleIn: {
-    initial: { scale: 0.9, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
     transition: { duration: 0.3 },
   },
   
-  // Slide animations
-  slideInLeft: {
-    initial: { x: -100, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    transition: { duration: 0.4, ease: 'easeOut' },
+  // Minimal hover effects
+  cardHover: {
+    y: -2,
+    transition: { duration: 0.2 },
   },
   
-  slideInRight: {
-    initial: { x: 100, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    transition: { duration: 0.4, ease: 'easeOut' },
-  },
-  
-  // Pulse animation for loading states
-  pulse: {
-    scale: [1, 1.05, 1],
-    opacity: [0.7, 1, 0.7],
-    transition: {
-      duration: 2,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
-  },
-  
-  // Shimmer effect
-  shimmer: {
-    x: [-100, 100],
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: 'linear',
-    },
+  // Simple fade
+  fadeIn: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.3 },
   },
 };
 
-// Glass morphism styles
-export const glassStyle = {
-  background: 'rgba(255, 255, 255, 0.05)',
-  backdropFilter: 'blur(10px)',
-  WebkitBackdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-};
-
-// Gradient styles
-export const gradients = {
-  primary: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.accent[600]} 100%)`,
-  secondary: `linear-gradient(135deg, ${colors.secondary[600]} 0%, ${colors.primary[600]} 100%)`,
-  accent: `linear-gradient(135deg, ${colors.accent[600]} 0%, ${colors.secondary[600]} 100%)`,
-  dark: `linear-gradient(135deg, ${colors.gray[900]} 0%, ${colors.gray[950]} 100%)`,
-  light: `linear-gradient(135deg, ${colors.gray[50]} 0%, ${colors.gray[100]} 100%)`,
-  mesh: `
-    radial-gradient(at 40% 20%, ${colors.primary[500]} 0px, transparent 50%),
-    radial-gradient(at 80% 0%, ${colors.accent[500]} 0px, transparent 50%),
-    radial-gradient(at 0% 50%, ${colors.secondary[500]} 0px, transparent 50%),
-    radial-gradient(at 80% 50%, ${colors.primary[400]} 0px, transparent 50%),
-    radial-gradient(at 0% 100%, ${colors.accent[400]} 0px, transparent 50%)
-  `,
-};
-
-// Shadow styles
-export const shadows = {
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-  '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-  glow: `0 0 20px ${colors.primary[500]}40`,
-  'glow-lg': `0 0 40px ${colors.primary[500]}60`,
+// Clean, minimal styles
+export const minimal = {
+  // Card styles
+  card: "bg-white border border-gray-200 rounded-lg shadow-sm",
+  cardHover: "hover:shadow-md hover:border-gray-300 transition-all duration-200",
+  
+  // Button styles
+  button: "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-4 py-2 text-sm font-medium",
+  buttonPrimary: "bg-blue-600 text-white hover:bg-blue-700 rounded-md px-4 py-2 text-sm font-medium border-0",
+  
+  // Text styles
+  heading: "text-gray-900 font-semibold",
+  text: "text-gray-700",
+  textSecondary: "text-gray-600",
+  textMuted: "text-gray-500",
+  
+  // Layout
+  container: "bg-gray-50",
+  sidebar: "bg-white border-r border-gray-200",
+  nav: "bg-white border-b border-gray-200",
 };
