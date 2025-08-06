@@ -83,9 +83,11 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
 
   const renderMediaPreview = () => {
     const fileType = attachment.fileType.toLowerCase();
-    const url = attachment.storageUrl || attachment.thumbnailUrl;
+    // Use the file API endpoint as fallback when no storage URL is available
+    const url = attachment.storageUrl || attachment.thumbnailUrl || `/api/files/${attachment.id}`;
 
-    if (!url) {
+    // For images, we should always have a URL now (either stored or via API)
+    if (!url && fileType !== 'photo' && fileType !== 'image') {
       return (
         <div className="flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800 rounded">
           {getFileIcon(fileType)}
@@ -117,7 +119,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
                 </div>
               ) : (
                 <Image
-                  src={attachment.thumbnailUrl || url}
+                  src={url}
                   alt={attachment.fileName || 'Image'}
                   width={attachment.width || 300}
                   height={attachment.height || 200}
@@ -127,6 +129,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
                     setIsLoading(false);
                     setHasError(true);
                   }}
+                  unoptimized // Allow external URLs
                 />
               )}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center">
@@ -239,11 +242,12 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
             </DialogHeader>
             <div className="relative flex items-center justify-center p-4">
               <Image
-                src={attachment.storageUrl || attachment.thumbnailUrl || ''}
+                src={url}
                 alt={attachment.fileName || 'Image'}
                 width={attachment.width || 800}
                 height={attachment.height || 600}
                 className="max-w-full max-h-[70vh] object-contain"
+                unoptimized // Allow external URLs
               />
             </div>
             <div className="flex items-center justify-between p-4 border-t">
