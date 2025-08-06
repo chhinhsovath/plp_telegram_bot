@@ -65,7 +65,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
     }
   };
 
-  const formatFileSize = (bytes: bigint | null) => {
+  const formatFileSize = (bytes: bigint | null | undefined) => {
     if (!bytes) return '';
     const size = Number(bytes);
     if (size < 1024) return `${size} B`;
