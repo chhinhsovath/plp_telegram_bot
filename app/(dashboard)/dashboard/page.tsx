@@ -47,7 +47,36 @@ export default function DashboardPage() {
       setStats(data);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
-      // Only use fallback data for actual network errors, not authentication issues
+      
+      // Try to fetch basic data from health endpoint as fallback
+      try {
+        console.log("Attempting fallback to health endpoint...");
+        const healthResponse = await fetch("/api/health");
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json();
+          console.log("Health endpoint data:", healthData);
+          
+          setStats({
+            groupCount: healthData.counts?.groups || 0,
+            messageCount: healthData.counts?.messages || 0,
+            userCount: 0, // Health endpoint doesn't provide user count
+            attachmentCount: 0, // Health endpoint doesn't provide attachment count
+            recentMessages: [],
+            previousStats: {
+              groupCount: healthData.counts?.groups || 0,
+              messageCount: 0,
+              userCount: 0,
+              attachmentCount: 0,
+            }
+          });
+          console.log("Using health endpoint fallback data");
+          return;
+        }
+      } catch (fallbackError) {
+        console.error("Health endpoint fallback also failed:", fallbackError);
+      }
+      
+      // Final fallback: show zeros
       setStats({
         groupCount: 0,
         messageCount: 0,
