@@ -239,11 +239,12 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                         <div className="aspect-square relative">
                           {attachment.fileType === "photo" ? (
                             <>
-                              <PhotoThumbnail
-                                src={attachment.thumbnailUrl || attachment.storageUrl}
-                                alt={attachment.fileName || "Image"}
-                                className="w-full h-full object-cover"
-                              />
+                              <div className="w-full h-full">
+                                <PhotoThumbnail
+                                  attachment={attachment}
+                                  size="large"
+                                />
+                              </div>
                               <motion.div
                                 className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
                                 animate={{
@@ -255,11 +256,12 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                           ) : attachment.fileType === "video" ? (
                             <div className="w-full h-full bg-gray-900 flex items-center justify-center relative">
                               {attachment.thumbnailUrl && (
-                                <PhotoThumbnail
-                                  src={attachment.thumbnailUrl}
-                                  alt={attachment.fileName || "Video"}
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                />
+                                <div className="absolute inset-0">
+                                  <PhotoThumbnail
+                                    attachment={attachment}
+                                    size="large"
+                                  />
+                                </div>
                               )}
                               <motion.div
                                 className="absolute inset-0 bg-black/40 flex items-center justify-center"
@@ -436,7 +438,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
               {/* Content */}
               <div className="flex items-center justify-center p-16 min-h-[400px]">
                 {selectedMedia.fileType === "photo" ? (
-                  <PhotoThumbnail
+                  <img
                     src={selectedMedia.storageUrl}
                     alt={selectedMedia.fileName || "Image"}
                     className="max-w-full max-h-[70vh] object-contain"

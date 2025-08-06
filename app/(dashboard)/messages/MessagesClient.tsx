@@ -289,9 +289,8 @@ export default function MessagesClient() {
                                 >
                                   {attachment.fileType === "photo" ? (
                                     <PhotoThumbnail
-                                      src={attachment.thumbnailUrl || attachment.storageUrl}
-                                      alt={attachment.fileName || "Image"}
-                                      className="rounded-lg"
+                                      attachment={attachment}
+                                      size="small"
                                     />
                                   ) : (
                                     <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center gap-2">
