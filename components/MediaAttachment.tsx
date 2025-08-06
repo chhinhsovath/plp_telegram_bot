@@ -81,13 +81,14 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Use the file API endpoint as fallback when no storage URL is available
+  const mediaUrl = attachment.storageUrl || attachment.thumbnailUrl || `/api/files/${attachment.id}`;
+
   const renderMediaPreview = () => {
     const fileType = attachment.fileType.toLowerCase();
-    // Use the file API endpoint as fallback when no storage URL is available
-    const url = attachment.storageUrl || attachment.thumbnailUrl || `/api/files/${attachment.id}`;
 
     // For images, we should always have a URL now (either stored or via API)
-    if (!url && fileType !== 'photo' && fileType !== 'image') {
+    if (!mediaUrl && fileType !== 'photo' && fileType !== 'image') {
       return (
         <div className="flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800 rounded">
           {getFileIcon(fileType)}
@@ -119,7 +120,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
                 </div>
               ) : (
                 <Image
-                  src={url}
+                  src={mediaUrl}
                   alt={attachment.fileName || 'Image'}
                   width={attachment.width || 300}
                   height={attachment.height || 200}
@@ -242,7 +243,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
             </DialogHeader>
             <div className="relative flex items-center justify-center p-4">
               <Image
-                src={url}
+                src={mediaUrl}
                 alt={attachment.fileName || 'Image'}
                 width={attachment.width || 800}
                 height={attachment.height || 600}
