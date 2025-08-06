@@ -12,12 +12,11 @@ import { AnimatedCard } from "@/components/auth/AnimatedCard";
 import { AnimatedInput } from "@/components/auth/AnimatedInput";
 import { AnimatedButton } from "@/components/auth/AnimatedButton";
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Mail, Lock, Eye, EyeOff, Crown, Shield, User, Sparkles, ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { AlertCircle, Mail, Lock, Eye, EyeOff, Crown, Shield, User, Sparkles } from "lucide-react";
 
-export default function LoginPage() {
+export default function EnhancedLoginPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -46,10 +45,10 @@ export default function LoginPage() {
       if (result?.ok) {
         window.location.href = "/dashboard";
       } else {
-        setError(result?.error || t('auth.invalidCredentials'));
+        setError(result?.error || t.login?.error || "Invalid credentials");
       }
     } catch (err) {
-      setError(t('common.error'));
+      setError(t.login?.error || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -72,10 +71,10 @@ export default function LoginPage() {
       if (result?.ok) {
         window.location.href = "/dashboard";
       } else {
-        setError(result?.error || t('auth.invalidCredentials'));
+        setError(result?.error || t.login?.error || "Invalid credentials");
       }
     } catch (err) {
-      setError(t('common.error'));
+      setError(t.login?.error || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -83,30 +82,6 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      {/* Back to Home */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="absolute top-4 left-4 z-20"
-      >
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>{t('common.backToHome')}</span>
-        </Link>
-      </motion.div>
-
-      {/* Language Switcher */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="absolute top-4 right-4 z-20"
-      >
-        <LanguageSwitcher />
-      </motion.div>
-
       <div className="w-full max-w-md space-y-8">
         {/* Logo and title */}
         <motion.div
@@ -132,10 +107,10 @@ export default function LoginPage() {
             <Sparkles className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            {t('auth.welcomeBack')}
+            {t.login?.title || "Welcome Back"}
           </h1>
           <p className="text-gray-400">
-            {t('auth.loginSubtitle')}
+            {t.login?.description || "Sign in to your account"}
           </p>
         </motion.div>
 
@@ -143,10 +118,10 @@ export default function LoginPage() {
         <AnimatedCard className="p-0">
           <CardHeader>
             <CardTitle className="text-xl text-white">
-              {t('auth.login')}
+              {t.login?.formTitle || "Sign In"}
             </CardTitle>
             <CardDescription className="text-gray-400">
-              {t('auth.enterCredentials')}
+              {t.login?.formDescription || "Enter your credentials to continue"}
             </CardDescription>
           </CardHeader>
 
@@ -155,33 +130,35 @@ export default function LoginPage() {
               <AnimatedInput
                 id="email"
                 type="email"
-                label={t('auth.email')}
+                label={t.login?.email || "Email"}
                 icon={<Mail className="w-4 h-4" />}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                error={error && error.includes("email") ? error : undefined}
               />
 
               <div className="relative">
                 <AnimatedInput
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  label={t('auth.password')}
+                  label={t.login?.password || "Password"}
                   icon={<Lock className="w-4 h-4" />}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  error={error && error.includes("password") ? error : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors z-10"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
-              {error && (
+              {error && !error.includes("email") && !error.includes("password") && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -197,7 +174,7 @@ export default function LoginPage() {
                 className="w-full"
                 isLoading={isLoading}
               >
-                {isLoading ? t('auth.loggingIn') : t('auth.login')}
+                {isLoading ? "Signing in..." : t.login?.submit || "Sign In"}
               </AnimatedButton>
             </form>
 
@@ -209,7 +186,7 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-black/40 px-2 text-gray-400">
-                    {t('auth.orDemoAccount')}
+                    {t.login?.orDemo || "Or use demo account"}
                   </span>
                 </div>
               </div>
@@ -242,13 +219,16 @@ export default function LoginPage() {
             </div>
           </CardContent>
 
-          <CardFooter>
-            <Link
-              href="/register"
-              className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              {t('auth.noAccount')}
-            </Link>
+          <CardFooter className="flex flex-col gap-4">
+            <div className="flex items-center justify-between w-full">
+              <Link
+                href="/register"
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                {t.login?.noAccount || "Don't have an account?"}
+              </Link>
+              <LanguageSwitcher />
+            </div>
           </CardFooter>
         </AnimatedCard>
       </div>
