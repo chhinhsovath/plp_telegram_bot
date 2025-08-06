@@ -42,7 +42,7 @@ async function monitorWebhook() {
             title: true,
             username: true,
             telegramId: true
-          }
+          } as const
         });
         
         newGroups.forEach(group => {
@@ -65,7 +65,7 @@ async function monitorWebhook() {
         });
         
         newMessages.forEach(msg => {
-          console.log(`   - [${msg.group.title}] ${msg.user?.username || 'Unknown'}: ${msg.text?.substring(0, 50)}${msg.text && msg.text.length > 50 ? '...' : ''}`);
+          console.log(`   - [${msg.group.title}] ${msg.user?.telegramUsername || 'Unknown'}: ${msg.text?.substring(0, 50)}${msg.text && msg.text.length > 50 ? '...' : ''}`);
         });
         
         lastMessageCount = currentMessages;
