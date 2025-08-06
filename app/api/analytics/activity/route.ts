@@ -31,46 +31,56 @@ export async function GET(request: Request) {
       whereClause.groupId = groupId;
     }
 
-    // Get daily message counts
-    const dailyMessages = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count
-      FROM messages
-      WHERE created_at >= ${startDate}
-        AND created_at <= ${endDate}
-        AND is_deleted = false
-        ${groupId ? prisma.$queryRaw`AND group_id = ${groupId}` : prisma.$queryRaw``}
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `;
+    // Get messages for daily counts (simplified)
+    const allMessages = await prisma.message.findMany({
+      where: whereClause,
+      select: {
+        createdAt: true,
+      }
+    });
 
-    // Get hourly distribution for today
-    const hourlyMessages = await prisma.$queryRaw<Array<{ hour: number; count: bigint }>>`
-      SELECT 
-        EXTRACT(HOUR FROM created_at) as hour,
-        COUNT(*) as count
-      FROM messages
-      WHERE DATE(created_at) = CURRENT_DATE
-        AND is_deleted = false
-        ${groupId ? prisma.$queryRaw`AND group_id = ${groupId}` : prisma.$queryRaw``}
-      GROUP BY hour
-      ORDER BY hour ASC
-    `;
+    // Get today's messages for hourly distribution
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Format data for charts
-    const dailyData = dailyMessages.map(item => ({
-      date: format(item.date, "MMM dd"),
-      messages: Number(item.count)
+    const todayWhereClause = { ...whereClause };
+    todayWhereClause.createdAt = {
+      gte: today,
+      lt: tomorrow
+    };
+
+    const todayMessages = await prisma.message.findMany({
+      where: todayWhereClause,
+      select: {
+        createdAt: true,
+      }
+    });
+
+    // Process daily data
+    const dailyMap = new Map<string, number>();
+    allMessages.forEach(message => {
+      const dateStr = format(message.createdAt, "MMM dd");
+      dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + 1);
+    });
+
+    const dailyData = Array.from(dailyMap.entries()).map(([date, messages]) => ({
+      date,
+      messages
     }));
 
-    const hourlyData = Array.from({ length: 24 }, (_, i) => {
-      const hourData = hourlyMessages.find(h => h.hour === i);
-      return {
-        hour: `${i}:00`,
-        messages: hourData ? Number(hourData.count) : 0
-      };
+    // Process hourly data
+    const hourlyMap = new Map<number, number>();
+    todayMessages.forEach(message => {
+      const hour = message.createdAt.getHours();
+      hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
     });
+
+    const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+      hour: `${i}:00`,
+      messages: hourlyMap.get(i) || 0
+    }));
 
     // Get message type distribution
     const messageTypes = await prisma.message.groupBy({

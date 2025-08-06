@@ -45,36 +45,25 @@ export async function GET(request: Request) {
       take: limit
     });
 
-    // Get user growth over time
-    const userGrowth = await prisma.$queryRaw<Array<{ date: Date; newUsers: bigint }>>`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(DISTINCT telegram_user_id) as "newUsers"
-      FROM messages
-      WHERE created_at >= ${startDate}
-        AND is_deleted = false
-        ${groupId ? prisma.$queryRaw`AND group_id = ${groupId}` : prisma.$queryRaw``}
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `;
+    // Get messages for user growth analysis (simplified)
+    const recentMessages = await prisma.message.findMany({
+      where: whereClause,
+      select: {
+        createdAt: true,
+        telegramUserId: true,
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
 
-    // Get user activity patterns
-    const activityPatterns = await prisma.$queryRaw<Array<{ 
-      dayOfWeek: number; 
-      hour: number; 
-      messageCount: bigint 
-    }>>`
-      SELECT 
-        EXTRACT(DOW FROM created_at) as "dayOfWeek",
-        EXTRACT(HOUR FROM created_at) as hour,
-        COUNT(*) as "messageCount"
-      FROM messages
-      WHERE created_at >= ${startDate}
-        AND is_deleted = false
-        ${groupId ? prisma.$queryRaw`AND group_id = ${groupId}` : prisma.$queryRaw``}
-      GROUP BY "dayOfWeek", hour
-      ORDER BY "messageCount" DESC
-    `;
+    // Get messages for activity patterns (simplified)
+    const allMessages = await prisma.message.findMany({
+      where: whereClause,
+      select: {
+        createdAt: true,
+      }
+    });
 
     // Format top contributors data
     const contributorsData = topContributors.map(user => ({
@@ -83,19 +72,36 @@ export async function GET(request: Request) {
       messageCount: user._count.id
     }));
 
-    // Format user growth data
-    const growthData = userGrowth.map(item => ({
-      date: item.date.toISOString().split('T')[0],
-      newUsers: Number(item.newUsers)
-    }));
+    // Process user growth data (simplified)
+    const growthByDay = new Map<string, Set<string>>();
+    recentMessages.forEach(message => {
+      const dateStr = message.createdAt.toISOString().split('T')[0];
+      if (!growthByDay.has(dateStr)) {
+        growthByDay.set(dateStr, new Set());
+      }
+      growthByDay.get(dateStr)!.add(message.telegramUserId.toString());
+    });
+
+    const growthData = Array.from(growthByDay.entries()).map(([date, userIds]) => ({
+      date,
+      newUsers: userIds.size
+    })).sort((a, b) => a.date.localeCompare(b.date));
+
+    // Process activity patterns (simplified)
+    const activityMap = new Map<string, number>();
+    allMessages.forEach(message => {
+      const date = new Date(message.createdAt);
+      const dayOfWeek = date.getDay();
+      const hour = date.getHours();
+      const key = `${dayOfWeek}-${hour}`;
+      activityMap.set(key, (activityMap.get(key) || 0) + 1);
+    });
 
     // Create activity heatmap data
     const heatmapData = Array.from({ length: 7 }, (_, dayIndex) => {
       return Array.from({ length: 24 }, (_, hourIndex) => {
-        const activity = activityPatterns.find(
-          ap => ap.dayOfWeek === dayIndex && ap.hour === hourIndex
-        );
-        return activity ? Number(activity.messageCount) : 0;
+        const key = `${dayIndex}-${hourIndex}`;
+        return activityMap.get(key) || 0;
       });
     });
 
