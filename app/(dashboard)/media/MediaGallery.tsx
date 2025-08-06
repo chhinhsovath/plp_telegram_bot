@@ -436,7 +436,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
               {/* Content */}
               <div className="flex items-center justify-center p-16 min-h-[400px]">
                 {selectedMedia.fileType === "photo" ? (
-                  <img
+                  <PhotoThumbnail
                     src={selectedMedia.storageUrl}
                     alt={selectedMedia.fileName || "Image"}
                     className="max-w-full max-h-[70vh] object-contain"

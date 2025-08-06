@@ -243,7 +243,7 @@ export default function DashboardPage() {
         {/* Quick Stats */}
         <div className="space-y-6">
           <AnimatedCard variant="gradient" className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Today's Activity</h3>
+            <h3 className="text-lg font-semibold mb-4">Today&apos;s Activity</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Messages</span>
