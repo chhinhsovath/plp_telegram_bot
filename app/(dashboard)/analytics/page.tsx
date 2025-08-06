@@ -11,14 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl sm:text-3xl font-bold">Analytics Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
             Comprehensive insights and real-time statistics for your Telegram groups
           </p>
         </div>
-        <ExportButton />
+        <div className="self-start sm:self-auto">
+          <ExportButton />
+        </div>
       </div>
 
       {/* Tabs for different views */}
@@ -34,8 +36,8 @@ export default function AnalyticsPage() {
           {/* Key Metrics */}
           <OverviewCards />
 
-          {/* Main Charts */}
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* Main Charts - Mobile Responsive */}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             <ActivityChart />
             <TopGroupsChart />
           </div>

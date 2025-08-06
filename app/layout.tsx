@@ -18,6 +18,18 @@ const hanuman = Hanuman({
 export const metadata: Metadata = {
   title: "PLP Telegram Manager",
   description: "Manage and analyze your Telegram groups",
+  manifest: '/manifest.json',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
 };
 
 export default function RootLayout({

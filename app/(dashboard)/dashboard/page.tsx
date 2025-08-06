@@ -135,12 +135,12 @@ export default function DashboardPage() {
         <p className={minimal.textSecondary}>Overview of your Telegram groups and messages</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Mobile Responsive */}
       <motion.div
         variants={animations.staggerContainer}
         initial="initial"
         animate="animate"
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {statCards.map((stat, index) => (
           <motion.div
@@ -177,15 +177,15 @@ export default function DashboardPage() {
         ))}
       </motion.div>
 
-      {/* Activity Chart */}
+      {/* Activity Section - Mobile Responsive */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="grid gap-6 lg:grid-cols-3"
+        className="grid gap-6 grid-cols-1 lg:grid-cols-3"
       >
         {/* Recent Activity */}
-        <div className="lg:col-span-2">
+        <div className="order-2 lg:order-1 lg:col-span-2">
           <div className={cn(minimal.card, "p-6")}>
             <div className="flex items-center justify-between mb-6">
               <h3 className={cn("text-lg font-semibold", minimal.heading)}>Recent Messages</h3>

@@ -87,3 +87,72 @@
     -webkit-text-fill-color: transparent;
   }
 }
+
+/* Mobile-specific optimizations */
+@layer components {
+  /* Ensure touch targets are at least 44x44px for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Prevent horizontal scrolling on mobile */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Improve tap highlights on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Better focus states for mobile */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+  
+  /* Smooth scrolling on mobile */
+  @media (max-width: 768px) {
+    * {
+      scroll-behavior: smooth;
+    }
+    
+    /* Prevent text size adjustment on orientation change */
+    body {
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    /* Better spacing for mobile */
+    .mobile-container {
+      @apply px-4 py-4;
+    }
+  }
+  
+  /* Hide scrollbars on mobile for cleaner look */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+}
+
+/* Animation optimizations for mobile */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
