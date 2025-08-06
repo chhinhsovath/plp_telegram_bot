@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { MediaAttachment } from "@/components/MediaAttachment";
 
 async function getGroup(id: string) {
   const group = await prisma.telegramGroup.findUnique({
@@ -248,22 +249,13 @@ export default async function GroupDetailPage({
                         )}
                         
                         {message.attachments.length > 0 && (
-                          <div className="mt-2 space-y-2">
+                          <div className="mt-3 space-y-2">
                             {message.attachments.map((attachment) => (
-                              <div
+                              <MediaAttachment
                                 key={attachment.id}
-                                className="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
-                              >
-                                {getMessageTypeIcon(attachment.fileType)}
-                                <span className="text-sm">
-                                  {attachment.fileName || `${attachment.fileType} attachment`}
-                                </span>
-                                {attachment.fileSize && (
-                                  <span className="text-xs text-gray-500">
-                                    ({(Number(attachment.fileSize) / 1024).toFixed(1)} KB)
-                                  </span>
-                                )}
-                              </div>
+                                attachment={attachment}
+                                className="block"
+                              />
                             ))}
                           </div>
                         )}

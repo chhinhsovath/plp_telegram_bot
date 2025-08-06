@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${hanuman.variable}`}>
-      <body className={inter.className}>
+      <body className={hanuman.className}>
         <LanguageProvider>
           <QueryProvider>
             {children}
