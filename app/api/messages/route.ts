@@ -1,115 +1,116 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/db";
-import { MessageFilterSchema } from "@/lib/validations";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  // Since auth is disabled, we'll skip the session check
-  // const session = await getServerSession(authOptions);
-  // if (!session) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
-
   try {
-    // Parse and validate query parameters with Zod
+    // Check if user is authenticated
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get query parameters
     const searchParams = req.nextUrl.searchParams;
-    const rawParams = {
-      groupId: searchParams.get("groupId") || undefined,
-      messageType: searchParams.get("type") || undefined,
-      startDate: searchParams.get("startDate") || undefined,
-      endDate: searchParams.get("endDate") || undefined,
-      search: searchParams.get("search") || undefined,
-      limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 20,
-      offset: searchParams.get("page") ? (parseInt(searchParams.get("page")!) - 1) * 20 : 0,
-    };
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search') || '';
+    const groupId = searchParams.get('groupId');
+    const type = searchParams.get('type');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
-    const filters = MessageFilterSchema.parse(rawParams);
-    
-    // Use validated filters
-    const { limit, offset, groupId, messageType, startDate, endDate, search } = filters;
+    // Build where clause
+    const where: any = {};
 
-    const where: any = {
-      isDeleted: false,
-    };
-
+    // Search in message text
     if (search) {
       where.OR = [
-        { text: { contains: search, mode: "insensitive" } },
-        { telegramUsername: { contains: search, mode: "insensitive" } },
+        { text: { contains: search, mode: 'insensitive' } },
+        { telegramUsername: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
-    if (groupId) {
+    // Filter by group
+    if (groupId && groupId !== 'all') {
       where.groupId = groupId;
     }
 
-    if (messageType) {
-      where.messageType = messageType;
+    // Filter by message type
+    if (type && type !== 'all') {
+      where.messageType = type;
     }
 
-    if (startDate) {
-      where.telegramDate = {
-        ...where.telegramDate,
-        gte: new Date(startDate),
-      };
+    // Filter by date range
+    if (startDate || endDate) {
+      where.telegramDate = {};
+      if (startDate) where.telegramDate.gte = new Date(startDate);
+      if (endDate) where.telegramDate.lte = new Date(endDate);
     }
 
-    if (endDate) {
-      where.telegramDate = {
-        ...where.telegramDate,
-        lte: new Date(endDate),
-      };
-    }
+    // Get total count
+    const totalCount = await prisma.message.count({ where });
 
-    const [messages, total] = await Promise.all([
-      prisma.message.findMany({
-        where,
-        include: {
-          group: true,
-          user: true,
-          attachments: true,
-          _count: {
-            select: { replies: true },
+    // Get messages with pagination
+    const messages = await prisma.message.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            telegramUsername: true,
           },
         },
-        orderBy: { telegramDate: "desc" },
-        skip: offset,
-        take: limit,
-      }),
-      prisma.message.count({ where }),
-    ]);
+        group: {
+          select: {
+            id: true,
+            title: true,
+            username: true,
+          },
+        },
+        attachments: {
+          select: {
+            id: true,
+            fileType: true,
+            fileName: true,
+            fileSize: true,
+            storageUrl: true,
+            thumbnailUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+          },
+        },
+      },
+      orderBy: { telegramDate: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
-    const page = Math.floor(offset / limit) + 1;
+    // Calculate pagination
+    const totalPages = Math.ceil(totalCount / limit);
 
     return NextResponse.json({
       messages,
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        totalCount,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       },
     });
+
   } catch (error) {
-    // Handle Zod validation errors specifically
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: "Invalid query parameters",
-          details: error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
-        },
-        { status: 400 }
-      );
-    }
-    
-    console.error("Error fetching messages:", error);
+    console.error('Error fetching messages:', error);
     return NextResponse.json(
-      { error: "Failed to fetch messages" },
+      { error: 'Failed to fetch messages' },
       { status: 500 }
     );
   }

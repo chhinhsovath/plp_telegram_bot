@@ -1,21 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/db";
-import { CreateGroupSchema, UpdateGroupSchema } from "@/lib/validations";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  // Auth disabled - skip session check
-  // const session = await getServerSession(authOptions);
-  // if (!session) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
-
   try {
+    // Check if user is authenticated
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get all groups
     const groups = await prisma.telegramGroup.findMany({
-      where: { isActive: true },
-      include: {
+      select: {
+        id: true,
+        telegramId: true,
+        title: true,
+        username: true,
+        description: true,
+        memberCount: true,
+        isActive: true,
+        botAddedAt: true,
         _count: {
           select: {
             messages: true,
@@ -23,68 +29,15 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
 
     return NextResponse.json(groups);
-  } catch (error) {
-    console.error("Error fetching groups:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch groups" },
-      { status: 500 }
-    );
-  }
-}
 
-export async function POST(req: NextRequest) {
-  // Auth disabled - skip session check
-  
-  try {
-    const body = await req.json();
-    
-    // Validate request body with Zod
-    const validatedData = CreateGroupSchema.parse(body);
-    
-    // Check if group already exists
-    const existingGroup = await prisma.telegramGroup.findUnique({
-      where: { telegramId: validatedData.telegramId }
-    });
-    
-    if (existingGroup) {
-      return NextResponse.json(
-        { error: "Group already exists" },
-        { status: 409 }
-      );
-    }
-    
-    // Create new group
-    const group = await prisma.telegramGroup.create({
-      data: {
-        telegramId: validatedData.telegramId,
-        title: validatedData.title,
-        username: validatedData.username,
-        description: validatedData.description,
-      },
-    });
-    
-    return NextResponse.json(group, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: "Invalid request data",
-          details: error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
-        },
-        { status: 400 }
-      );
-    }
-    
-    console.error("Error creating group:", error);
+    console.error('Error fetching groups:', error);
     return NextResponse.json(
-      { error: "Failed to create group" },
+      { error: 'Failed to fetch groups' },
       { status: 500 }
     );
   }
