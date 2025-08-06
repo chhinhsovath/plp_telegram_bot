@@ -80,17 +80,27 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
       });
 
       const response = await fetch(`/api/media?${params}`);
-      const data = await response.json();
-
-      if (reset) {
-        setMedia(data.attachments);
-      } else {
-        setMedia(prev => [...prev, ...data.attachments]);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      setHasMore(data.pagination.hasMore);
-      setTotalCount(data.pagination.totalCount);
-      setPage(data.pagination.page);
+      const data = await response.json();
+
+      // Ensure data has the expected structure
+      if (!data || !data.attachments || !data.pagination) {
+        throw new Error('Invalid response structure');
+      }
+
+      if (reset) {
+        setMedia(data.attachments || []);
+      } else {
+        setMedia(prev => [...prev, ...(data.attachments || [])]);
+      }
+      
+      setHasMore(data.pagination?.hasMore || false);
+      setTotalCount(data.pagination?.totalCount || 0);
+      setPage(data.pagination?.page || pageNum);
     } catch (error) {
       console.error('Error fetching media:', error);
     } finally {
@@ -98,8 +108,15 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
     }
   }, [debouncedSearchQuery, selectedGroup, mediaType]);
 
+  // Initial load flag to prevent double fetching
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Reset and fetch when filters change
   useEffect(() => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+      return; // Skip first run to use initial data
+    }
     setPage(1);
     fetchMedia(1, true);
   }, [debouncedSearchQuery, selectedGroup, mediaType]);
@@ -150,10 +167,10 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
   };
 
   const mediaStats = {
-    photos: stats.find(s => s.fileType === 'photo')?._count || 0,
-    videos: stats.find(s => s.fileType === 'video')?._count || 0,
-    documents: stats.find(s => s.fileType === 'document')?._count || 0,
-    totalSize: formatFileSize(totalSize),
+    photos: stats?.find(s => s.fileType === 'photo')?._count || 0,
+    videos: stats?.find(s => s.fileType === 'video')?._count || 0,
+    documents: stats?.find(s => s.fileType === 'document')?._count || 0,
+    totalSize: formatFileSize(totalSize || 0),
   };
 
   return (
@@ -166,7 +183,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
       >
         <PageHeader
           title="Media Gallery"
-          description={`Browse all media files collected from your groups${totalCount > 0 ? ` • ${media.length} of ${totalCount} loaded` : ''}`}
+          description={`Browse all media files collected from your groups${totalCount > 0 ? ` • ${media?.length || 0} of ${totalCount} loaded` : ''}`}
           icon={<ImageIcon className="w-6 h-6" />}
           actions={
             <div className="flex items-center gap-2">
@@ -233,11 +250,25 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
                   </div>
                   <motion.div 
-                    className={`p-3 rounded-lg bg-${stat.color}-500/10`}
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: stat.color === 'green' ? 'rgb(34 197 94 / 0.1)' :
+                                      stat.color === 'blue' ? 'rgb(59 130 246 / 0.1)' :
+                                      stat.color === 'purple' ? 'rgb(147 51 234 / 0.1)' :
+                                      'rgb(236 72 153 / 0.1)'
+                    }}
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <stat.icon className={`w-5 h-5 text-${stat.color}-500`} />
+                    <stat.icon 
+                      className="w-5 h-5"
+                      style={{
+                        color: stat.color === 'green' ? 'rgb(34 197 94)' :
+                               stat.color === 'blue' ? 'rgb(59 130 246)' :
+                               stat.color === 'purple' ? 'rgb(147 51 234)' :
+                               'rgb(236 72 153)'
+                      }}
+                    />
                   </motion.div>
                 </div>
               </AnimatedCard>
@@ -297,7 +328,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
               : "space-y-4"
           )}
         >
-          {media.length === 0 && !loading ? (
+          {(!media || media.length === 0) && !loading ? (
             <AnimatedCard variant="hover" className="col-span-full p-12 text-center">
               <ImageIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-lg font-semibold mb-2">No media found</p>
@@ -526,7 +557,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                     <span className="text-sm text-gray-500">Loading more media...</span>
                   </div>
                 )}
-                {!loading && !hasMore && media.length > 0 && (
+                {!loading && !hasMore && media && media.length > 0 && (
                   <p className="text-sm text-gray-500">
                     No more media to load • {totalCount} total files
                   </p>
