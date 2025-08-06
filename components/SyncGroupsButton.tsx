@@ -47,17 +47,20 @@ export function SyncGroupsButton() {
         },
       });
 
-      const data: SyncResult = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        setSyncResult(data);
+        const syncData = data as SyncResult;
+        setSyncResult(syncData);
         // Show details if there are errors or inactive groups
-        if (data.errorCount > 0 || data.inactiveCount > 0) {
+        if (syncData.errorCount > 0 || syncData.inactiveCount > 0) {
           setShowDetails(true);
         }
         // Refresh the page to show updated groups
         router.refresh();
       } else {
+        // Handle error response
+        const errorMessage = data.error || 'Failed to sync groups';
         setSyncResult({
           success: false,
           syncedCount: 0,
@@ -65,8 +68,8 @@ export function SyncGroupsButton() {
           inactiveCount: 0,
           syncedGroups: [],
           inactiveGroups: [],
-          errors: [{ group: 'Unknown', error: data.error || 'Failed to sync groups', action: 'Failed' }],
-          message: data.error || 'Failed to sync groups'
+          errors: [{ group: 'Unknown', error: errorMessage, action: 'Failed' }],
+          message: errorMessage
         });
         setShowDetails(true);
       }
