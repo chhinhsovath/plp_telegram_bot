@@ -34,9 +34,7 @@ async function clearSampleData() {
     console.log('\n2️⃣ Cleaning up orphaned messages...');
     const orphanedMessages = await prisma.message.deleteMany({
       where: {
-        group: {
-          is: null
-        }
+        groupId: null
       }
     });
     console.log(`   ✅ Deleted ${orphanedMessages.count} orphaned messages`);
