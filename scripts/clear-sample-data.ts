@@ -30,14 +30,8 @@ async function clearSampleData() {
     });
     console.log(`   ✅ Deleted ${sampleGroups.count} sample groups`);
 
-    // Delete orphaned messages
-    console.log('\n2️⃣ Cleaning up orphaned messages...');
-    const orphanedMessages = await prisma.message.deleteMany({
-      where: {
-        groupId: null
-      }
-    });
-    console.log(`   ✅ Deleted ${orphanedMessages.count} orphaned messages`);
+    // Note: Messages are automatically deleted when groups are deleted due to cascade
+    console.log('\n2️⃣ Messages were automatically deleted with their groups (cascade delete)');
 
     // Show remaining data
     console.log('\n3️⃣ Remaining data in database:');
