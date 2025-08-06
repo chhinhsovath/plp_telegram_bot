@@ -40,7 +40,7 @@ interface MediaGalleryProps {
   initialMedia: any[];
   groups: any[];
   stats: any[];
-  totalSize: bigint;
+  totalSize: number;
 }
 
 export default function MediaGallery({ initialMedia, groups, stats, totalSize }: MediaGalleryProps) {
@@ -86,7 +86,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
     photos: stats.find(s => s.fileType === 'photo')?._count || 0,
     videos: stats.find(s => s.fileType === 'video')?._count || 0,
     documents: stats.find(s => s.fileType === 'document')?._count || 0,
-    totalSize: formatFileSize(Number(totalSize)),
+    totalSize: formatFileSize(totalSize),
   };
 
   return (
@@ -318,7 +318,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                             {attachment.fileName || "Unnamed file"}
                           </p>
                           <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>{formatFileSize(attachment.fileSize || 0)}</span>
+                            <span>{formatFileSize(Number(attachment.fileSize || 0))}</span>
                             <span>{formatDistanceToNow(new Date(attachment.createdAt), { addSuffix: true })}</span>
                           </div>
                         </div>
@@ -339,7 +339,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                               {attachment.fileName || "Unnamed file"}
                             </p>
                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span>{formatFileSize(attachment.fileSize || 0)}</span>
+                              <span>{formatFileSize(Number(attachment.fileSize || 0))}</span>
                               <span>•</span>
                               <span>{attachment.message?.group?.title || "Unknown Group"}</span>
                               <span>•</span>
@@ -405,7 +405,7 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
                   <div className="text-white">
                     <p className="font-medium">{selectedMedia.fileName || "Unnamed file"}</p>
                     <p className="text-sm opacity-75">
-                      {formatFileSize(selectedMedia.fileSize || 0)} • 
+                      {formatFileSize(Number(selectedMedia.fileSize || 0))} • 
                       {selectedMedia.message?.group?.title || "Unknown Group"}
                     </p>
                   </div>

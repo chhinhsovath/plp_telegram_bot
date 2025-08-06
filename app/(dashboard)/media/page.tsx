@@ -31,8 +31,10 @@ async function getMediaData() {
   ]);
 
   const totalSize = totalSizeResult._sum.fileSize || BigInt(0);
+  // Convert BigInt to number for calculations (safe for file sizes)
+  const totalSizeNumber = Number(totalSize);
 
-  return { stats, totalSize, attachments, groups };
+  return { stats, totalSize: totalSizeNumber, attachments, groups };
 }
 
 export default async function MediaPage() {
