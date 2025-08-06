@@ -271,6 +271,60 @@ export async function handleMemberJoin(ctx: Context) {
   }
 }
 
+export async function handleBotAddedToGroup(ctx: Context) {
+  const update = ctx.update as any;
+  
+  if (!update.my_chat_member) return;
+  
+  const { chat, new_chat_member } = update.my_chat_member;
+  
+  // Check if the bot was added to a group/supergroup
+  if ((chat.type === 'group' || chat.type === 'supergroup') && 
+      new_chat_member.user.id === ctx.botInfo?.id &&
+      new_chat_member.status === 'member') {
+    
+    try {
+      // Create or update the group
+      await prisma.telegramGroup.upsert({
+        where: { telegramId: BigInt(chat.id) },
+        create: {
+          telegramId: BigInt(chat.id),
+          title: chat.title || 'Unknown Group',
+          username: chat.username || null,
+          memberCount: 0, // Will be updated when we receive messages
+          isActive: true,
+        },
+        update: {
+          title: chat.title || 'Unknown Group',
+          username: chat.username || null,
+          isActive: true,
+        }
+      });
+      
+      console.log(`Bot added to group: ${chat.title} (${chat.id})`);
+    } catch (error) {
+      console.error('Error handling bot added to group:', error);
+    }
+  }
+  
+  // Check if bot was removed from a group
+  if ((chat.type === 'group' || chat.type === 'supergroup') && 
+      new_chat_member.user.id === ctx.botInfo?.id &&
+      (new_chat_member.status === 'left' || new_chat_member.status === 'kicked')) {
+    
+    try {
+      await prisma.telegramGroup.update({
+        where: { telegramId: BigInt(chat.id) },
+        data: { isActive: false }
+      });
+      
+      console.log(`Bot removed from group: ${chat.title} (${chat.id})`);
+    } catch (error) {
+      console.error('Error handling bot removed from group:', error);
+    }
+  }
+}
+
 export async function handleMemberLeft(ctx: Context) {
   if (!ctx.chat || ctx.chat.type === 'private') return;
   

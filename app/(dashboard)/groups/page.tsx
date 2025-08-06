@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SyncGroupsButton } from "@/components/SyncGroupsButton";
 
 async function getGroups() {
   const groups = await prisma.telegramGroup.findMany({
@@ -39,9 +40,12 @@ export default async function GroupsPage() {
             Manage your connected Telegram groups
           </p>
         </div>
-        <Button>
-          Add New Group
-        </Button>
+        <div className="flex items-center gap-2">
+          <SyncGroupsButton />
+          <Button>
+            Add New Group
+          </Button>
+        </div>
       </div>
 
       {groups.length === 0 ? (

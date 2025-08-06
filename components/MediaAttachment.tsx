@@ -74,7 +74,7 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
     return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
-  const formatDuration = (seconds: number | null) => {
+  const formatDuration = (seconds: number | null | undefined) => {
     if (!seconds) return '';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
