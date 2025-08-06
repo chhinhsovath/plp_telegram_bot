@@ -198,14 +198,14 @@ export default function DashboardPage() {
                   />
                 ))}
               </div>
-            ) : stats?.recentMessages.length === 0 ? (
+            ) : !stats?.recentMessages || stats.recentMessages.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No messages yet. Add the bot to a Telegram group to start collecting messages.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {stats?.recentMessages.map((message, index) => (
+                {stats?.recentMessages?.map((message, index) => (
                   <motion.div
                     key={message.id}
                     initial={{ opacity: 0, x: -20 }}

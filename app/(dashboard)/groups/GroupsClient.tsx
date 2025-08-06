@@ -43,17 +43,17 @@ interface Group {
 }
 
 interface GroupsClientProps {
-  groups: Group[];
+  groups?: Group[];
   isAdmin: boolean;
 }
 
-export default function GroupsClient({ groups, isAdmin }: GroupsClientProps) {
+export default function GroupsClient({ groups = [], isAdmin }: GroupsClientProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
-  const filteredGroups = groups.filter((group) => {
+  const filteredGroups = (groups || []).filter((group) => {
     const matchesSearch = group.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          group.username?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterActive === null || group.isActive === filterActive;
@@ -62,10 +62,10 @@ export default function GroupsClient({ groups, isAdmin }: GroupsClientProps) {
   });
 
   const stats = {
-    total: groups.length,
-    active: groups.filter(g => g.isActive).length,
-    inactive: groups.filter(g => !g.isActive).length,
-    totalMessages: groups.reduce((acc, g) => acc + g._count.messages, 0),
+    total: (groups || []).length,
+    active: (groups || []).filter(g => g.isActive).length,
+    inactive: (groups || []).filter(g => !g.isActive).length,
+    totalMessages: (groups || []).reduce((acc, g) => acc + g._count.messages, 0),
   };
 
   return (

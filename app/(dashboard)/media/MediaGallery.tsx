@@ -37,13 +37,13 @@ import { animations, colors } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 
 interface MediaGalleryProps {
-  initialMedia: any[];
-  groups: any[];
-  stats: any[];
-  totalSize: number;
+  initialMedia?: any[];
+  groups?: any[];
+  stats?: any[];
+  totalSize?: number;
 }
 
-export default function MediaGallery({ initialMedia, groups, stats, totalSize }: MediaGalleryProps) {
+export default function MediaGallery({ initialMedia = [], groups = [], stats = [], totalSize = 0 }: MediaGalleryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("all");
   const [mediaType, setMediaType] = useState("all");
