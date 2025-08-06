@@ -1,14 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, File, Loader2 } from 'lucide-react';
+import { FileText, File, FileSpreadsheet, Presentation } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-// Set up the worker for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface DocumentThumbnailProps {
   attachment: {
@@ -23,81 +16,77 @@ interface DocumentThumbnailProps {
 }
 
 export function DocumentThumbnail({ attachment, size = 'medium', className }: DocumentThumbnailProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [thumbnail, setThumbnail] = useState<string | null>(null);
-
   const sizeMap = {
-    small: { width: 100, height: 141 },
-    medium: { width: 200, height: 282 },
-    large: { width: 300, height: 424 }
+    small: { width: 100, height: 141, iconSize: 32, fontSize: 'text-xs' },
+    medium: { width: 200, height: 282, iconSize: 48, fontSize: 'text-sm' },
+    large: { width: 300, height: 424, iconSize: 64, fontSize: 'text-base' }
   };
 
   const dimensions = sizeMap[size];
-  const isPDF = attachment.mimeType?.includes('pdf');
+  
+  // Determine file type
+  const isPDF = attachment.mimeType?.includes('pdf') || 
+                attachment.fileName?.toLowerCase().endsWith('.pdf');
   const isWord = attachment.mimeType?.includes('word') || 
                  attachment.mimeType?.includes('document') ||
                  attachment.fileName?.toLowerCase().endsWith('.docx') ||
                  attachment.fileName?.toLowerCase().endsWith('.doc');
+  const isExcel = attachment.mimeType?.includes('excel') || 
+                  attachment.mimeType?.includes('spreadsheet') ||
+                  attachment.fileName?.toLowerCase().endsWith('.xlsx') ||
+                  attachment.fileName?.toLowerCase().endsWith('.xls');
+  const isPowerPoint = attachment.mimeType?.includes('powerpoint') || 
+                       attachment.mimeType?.includes('presentation') ||
+                       attachment.fileName?.toLowerCase().endsWith('.pptx') ||
+                       attachment.fileName?.toLowerCase().endsWith('.ppt');
 
-  // Generate a preview for PDF files
-  const generatePDFThumbnail = async () => {
-    if (!attachment.storageUrl || !isPDF) return;
-
-    try {
-      setLoading(true);
-      // For PDF, we'll render the first page as a thumbnail
-      // This will be handled by the Document component below
-      setLoading(false);
-    } catch (err) {
-      console.error('Error generating PDF thumbnail:', err);
-      setError(true);
-      setLoading(false);
+  // Get appropriate icon and styling
+  const getDocumentStyle = () => {
+    if (isPDF) {
+      return {
+        icon: FileText,
+        gradient: 'from-red-500 to-red-600',
+        label: 'PDF',
+        iconColor: 'text-white'
+      };
     }
-  };
-
-  useEffect(() => {
-    if (isPDF && attachment.storageUrl) {
-      generatePDFThumbnail();
-    } else {
-      setLoading(false);
+    if (isWord) {
+      return {
+        icon: FileText,
+        gradient: 'from-blue-500 to-blue-600',
+        label: 'DOCX',
+        iconColor: 'text-white'
+      };
     }
-  }, [attachment.storageUrl, isPDF]);
-
-  const onDocumentLoadSuccess = () => {
-    setLoading(false);
-    setError(false);
+    if (isExcel) {
+      return {
+        icon: FileSpreadsheet,
+        gradient: 'from-green-500 to-green-600',
+        label: 'XLSX',
+        iconColor: 'text-white'
+      };
+    }
+    if (isPowerPoint) {
+      return {
+        icon: Presentation,
+        gradient: 'from-orange-500 to-orange-600',
+        label: 'PPTX',
+        iconColor: 'text-white'
+      };
+    }
+    return {
+      icon: File,
+      gradient: 'from-purple-500 to-purple-600',
+      label: attachment.mimeType?.split('/').pop()?.toUpperCase() || 'FILE',
+      iconColor: 'text-white'
+    };
   };
 
-  const onDocumentLoadError = () => {
-    setLoading(false);
-    setError(true);
-  };
+  const style = getDocumentStyle();
+  const Icon = style.icon;
 
-  // For Word documents, we'll show a styled preview
-  if (isWord) {
-    return (
-      <div 
-        className={cn(
-          "relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex flex-col items-center justify-center",
-          className
-        )}
-        style={{ width: dimensions.width, height: dimensions.height }}
-      >
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-        <div className="relative z-10 flex flex-col items-center justify-center text-white p-4">
-          <FileText className="w-12 h-12 mb-2" />
-          <p className="text-xs font-semibold text-center line-clamp-2">
-            {attachment.fileName || 'Word Document'}
-          </p>
-          <p className="text-xs opacity-75 mt-1">DOCX</p>
-        </div>
-      </div>
-    );
-  }
-
-  // For PDF documents, render the first page
-  if (isPDF && attachment.storageUrl) {
+  // For PDF files, we can show an iframe preview
+  if (isPDF && attachment.storageUrl && size === 'large') {
     return (
       <div 
         className={cn(
@@ -106,71 +95,42 @@ export function DocumentThumbnail({ attachment, size = 'medium', className }: Do
         )}
         style={{ width: dimensions.width, height: dimensions.height }}
       >
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin" />
-          </div>
-        )}
-        
-        {error ? (
-          <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-500 to-red-600 text-white p-4">
-            <FileText className="w-12 h-12 mb-2" />
-            <p className="text-xs font-semibold text-center line-clamp-2">
-              {attachment.fileName || 'PDF Document'}
-            </p>
-            <p className="text-xs opacity-75 mt-1">PDF</p>
-          </div>
-        ) : (
-          <Document
-            file={attachment.storageUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
-            }
-            error={
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-500 to-red-600 text-white p-4">
-                <FileText className="w-12 h-12 mb-2" />
-                <p className="text-xs font-semibold">Preview unavailable</p>
-              </div>
-            }
-            className="flex items-center justify-center h-full"
-          >
-            <Page 
-              pageNumber={1} 
-              width={dimensions.width}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="shadow-lg"
-            />
-          </Document>
-        )}
+        <iframe
+          src={`${attachment.storageUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+          className="w-full h-full"
+          style={{ border: 'none' }}
+          title={attachment.fileName || 'PDF Preview'}
+        />
+        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+          <p className={cn("text-white font-semibold text-center line-clamp-1", dimensions.fontSize)}>
+            {attachment.fileName || 'PDF Document'}
+          </p>
+        </div>
       </div>
     );
   }
 
-  // Default document icon for other file types
+  // For all other documents, show a styled icon preview
   return (
     <div 
       className={cn(
-        "relative overflow-hidden rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex flex-col items-center justify-center",
+        `relative overflow-hidden rounded-lg bg-gradient-to-br ${style.gradient} flex flex-col items-center justify-center shadow-lg`,
         className
       )}
       style={{ width: dimensions.width, height: dimensions.height }}
     >
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
       <div className="relative z-10 flex flex-col items-center justify-center text-white p-4">
-        <File className="w-12 h-12 mb-2" />
-        <p className="text-xs font-semibold text-center line-clamp-2">
+        <Icon 
+          className={cn("mb-3", style.iconColor)} 
+          style={{ width: dimensions.iconSize, height: dimensions.iconSize }}
+        />
+        <p className={cn("font-semibold text-center line-clamp-2 mb-1", dimensions.fontSize)}>
           {attachment.fileName || 'Document'}
         </p>
-        {attachment.mimeType && (
-          <p className="text-xs opacity-75 mt-1">
-            {attachment.mimeType.split('/').pop()?.toUpperCase()}
-          </p>
-        )}
+        <p className={cn("opacity-75", dimensions.fontSize === 'text-xs' ? 'text-xs' : 'text-sm')}>
+          {style.label}
+        </p>
       </div>
     </div>
   );
