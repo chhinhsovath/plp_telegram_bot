@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { format, formatDistanceToNow } from "date-fns";
 import { PhotoThumbnail } from "@/components/PhotoThumbnail";
+import { DocumentThumbnail } from "@/components/DocumentThumbnail";
 import { animations, colors } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 
@@ -274,8 +275,21 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                               </motion.div>
                             </div>
                           ) : (
-                            <div className={`w-full h-full ${mediaIcon.bg} flex items-center justify-center`}>
-                              <IconComponent className={`w-12 h-12 ${mediaIcon.color}`} />
+                            <div className="w-full h-full">
+                              {attachment.mimeType?.includes('pdf') || 
+                               attachment.mimeType?.includes('word') || 
+                               attachment.mimeType?.includes('document') ||
+                               attachment.fileName?.toLowerCase().match(/\.(pdf|doc|docx)$/) ? (
+                                <DocumentThumbnail
+                                  attachment={attachment}
+                                  size="large"
+                                  className="w-full h-full"
+                                />
+                              ) : (
+                                <div className={`w-full h-full ${mediaIcon.bg} flex items-center justify-center`}>
+                                  <IconComponent className={`w-12 h-12 ${mediaIcon.color}`} />
+                                </div>
+                              )}
                             </div>
                           )}
                           

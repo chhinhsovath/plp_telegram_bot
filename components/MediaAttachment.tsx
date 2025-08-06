@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { DocumentThumbnail } from '@/components/DocumentThumbnail';
 
 interface MediaAttachmentProps {
   attachment: {
@@ -194,6 +195,43 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
         );
 
       default:
+        // Check if it's a PDF or Word document
+        const isDocument = attachment.mimeType?.includes('pdf') || 
+                          attachment.mimeType?.includes('word') || 
+                          attachment.mimeType?.includes('document') ||
+                          attachment.fileName?.toLowerCase().match(/\.(pdf|doc|docx)$/);
+        
+        if (isDocument) {
+          return (
+            <div className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <div className="cursor-pointer" onClick={() => setIsPreviewOpen(true)}>
+                <DocumentThumbnail
+                  attachment={attachment}
+                  size="small"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {attachment.fileName || `${fileType} file`}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatFileSize(attachment.fileSize)}
+                </p>
+              </div>
+              {attachment.storageUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open(attachment.storageUrl!, '_blank')}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          );
+        }
+        
+        // Default for other file types
         return (
           <div className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
             {getFileIcon(fileType)}
@@ -225,23 +263,23 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
         {renderMediaPreview()}
       </div>
 
-      {/* Image Preview Dialog */}
-      {(attachment.fileType === 'photo' || attachment.fileType === 'image') && (
-        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-            <DialogHeader className="p-4 pb-0">
-              <DialogTitle className="flex items-center justify-between">
-                <span>{attachment.fileName || 'Image Preview'}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsPreviewOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="relative flex items-center justify-center p-4">
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>{attachment.fileName || 'Preview'}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsPreviewOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative flex items-center justify-center p-4">
+            {(attachment.fileType === 'photo' || attachment.fileType === 'image') ? (
               <Image
                 src={mediaUrl}
                 alt={attachment.fileName || 'Image'}
@@ -250,25 +288,36 @@ export function MediaAttachment({ attachment, className }: MediaAttachmentProps)
                 className="max-w-full max-h-[70vh] object-contain"
                 unoptimized // Allow external URLs
               />
-            </div>
-            <div className="flex items-center justify-between p-4 border-t">
-              <span className="text-sm text-gray-500">
-                {attachment.width} × {attachment.height} • {formatFileSize(attachment.fileSize)}
-              </span>
-              {attachment.storageUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(attachment.storageUrl!, '_blank')}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+            ) : (
+              // Document preview
+              <div className="max-w-full max-h-[70vh] overflow-auto">
+                <DocumentThumbnail
+                  attachment={attachment}
+                  size="large"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-between p-4 border-t">
+            <span className="text-sm text-gray-500">
+              {(attachment.fileType === 'photo' || attachment.fileType === 'image') 
+                ? `${attachment.width} × ${attachment.height} • ${formatFileSize(attachment.fileSize)}`
+                : formatFileSize(attachment.fileSize)
+              }
+            </span>
+            {attachment.storageUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(attachment.storageUrl!, '_blank')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
