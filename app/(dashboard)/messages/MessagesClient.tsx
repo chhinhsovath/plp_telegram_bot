@@ -65,9 +65,9 @@ export default function MessagesClient() {
 
   const stats = {
     total: data?.total || 0,
-    photos: data?.messages?.filter(m => m.messageType === 'photo').length || 0,
-    videos: data?.messages?.filter(m => m.messageType === 'video').length || 0,
-    documents: data?.messages?.filter(m => m.messageType === 'document').length || 0,
+    photos: data?.messages?.filter((m: any) => m.messageType === 'photo').length || 0,
+    videos: data?.messages?.filter((m: any) => m.messageType === 'video').length || 0,
+    documents: data?.messages?.filter((m: any) => m.messageType === 'document').length || 0,
   };
 
   return (

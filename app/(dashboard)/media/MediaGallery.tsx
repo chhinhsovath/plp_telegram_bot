@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
@@ -438,11 +439,16 @@ export default function MediaGallery({ initialMedia, groups, stats, totalSize }:
               {/* Content */}
               <div className="flex items-center justify-center p-16 min-h-[400px]">
                 {selectedMedia.fileType === "photo" ? (
-                  <img
-                    src={selectedMedia.storageUrl}
-                    alt={selectedMedia.fileName || "Image"}
-                    className="max-w-full max-h-[70vh] object-contain"
-                  />
+                  <div className="relative max-w-full max-h-[70vh]">
+                    <Image
+                      src={selectedMedia.storageUrl}
+                      alt={selectedMedia.fileName || "Image"}
+                      width={800}
+                      height={600}
+                      className="object-contain"
+                      style={{ maxWidth: '100%', height: 'auto' }}
+                    />
+                  </div>
                 ) : selectedMedia.fileType === "video" ? (
                   <video
                     src={selectedMedia.storageUrl}
