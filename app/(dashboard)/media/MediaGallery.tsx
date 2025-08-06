@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { AnimatedCard } from "@/components/ui/animated-card";
@@ -36,6 +36,7 @@ import { PhotoThumbnail } from "@/components/PhotoThumbnail";
 import { DocumentThumbnail } from "@/components/DocumentThumbnail";
 import { animations, colors } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface MediaGalleryProps {
   initialMedia?: any[];
@@ -51,20 +52,85 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [hoveredMedia, setHoveredMedia] = useState<string | null>(null);
+  
+  // Pagination state
+  const [media, setMedia] = useState(initialMedia);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  // Refs for infinite scroll
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Debounce search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const filteredMedia = initialMedia.filter(attachment => {
-    const matchesSearch = !searchQuery || 
-      attachment.fileName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      attachment.message?.text?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesGroup = selectedGroup === "all" || 
-      attachment.message?.groupId === selectedGroup;
-    
-    const matchesType = mediaType === "all" || 
-      attachment.fileType === mediaType;
-    
-    return matchesSearch && matchesGroup && matchesType;
-  });
+  // Fetch media from API
+  const fetchMedia = useCallback(async (pageNum: number, reset = false) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: '50',
+        search: debouncedSearchQuery,
+        groupId: selectedGroup,
+        fileType: mediaType,
+      });
+
+      const response = await fetch(`/api/media?${params}`);
+      const data = await response.json();
+
+      if (reset) {
+        setMedia(data.attachments);
+      } else {
+        setMedia(prev => [...prev, ...data.attachments]);
+      }
+      
+      setHasMore(data.pagination.hasMore);
+      setTotalCount(data.pagination.totalCount);
+      setPage(data.pagination.page);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearchQuery, selectedGroup, mediaType]);
+
+  // Reset and fetch when filters change
+  useEffect(() => {
+    setPage(1);
+    fetchMedia(1, true);
+  }, [debouncedSearchQuery, selectedGroup, mediaType]);
+
+  // Set up infinite scroll observer
+  useEffect(() => {
+    if (loading) return;
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchMedia(page + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loading, hasMore, page, fetchMedia]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -100,7 +166,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
       >
         <PageHeader
           title="Media Gallery"
-          description="Browse all media files collected from your groups"
+          description={`Browse all media files collected from your groups${totalCount > 0 ? ` • ${media.length} of ${totalCount} loaded` : ''}`}
           icon={<ImageIcon className="w-6 h-6" />}
           actions={
             <div className="flex items-center gap-2">
@@ -231,15 +297,16 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
               : "space-y-4"
           )}
         >
-          {filteredMedia.length === 0 ? (
+          {media.length === 0 && !loading ? (
             <AnimatedCard variant="hover" className="col-span-full p-12 text-center">
               <ImageIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-lg font-semibold mb-2">No media found</p>
               <p className="text-gray-500">Try adjusting your search criteria</p>
             </AnimatedCard>
           ) : (
-            <AnimatePresence mode="popLayout">
-              {filteredMedia.map((attachment: any, index: number) => {
+            <>
+              <AnimatePresence mode="popLayout">
+                {media.map((attachment: any, index: number) => {
                 const mediaIcon = getMediaIcon(attachment.fileType);
                 const IconComponent = mediaIcon.icon;
                 
@@ -443,7 +510,29 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                   </motion.div>
                 );
               })}
-            </AnimatePresence>
+              </AnimatePresence>
+              
+              {/* Loading indicator and infinite scroll trigger */}
+              <div 
+                ref={loadMoreRef} 
+                className={cn(
+                  "col-span-full flex justify-center py-8",
+                  viewMode === "list" ? "mt-4" : ""
+                )}
+              >
+                {loading && (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm text-gray-500">Loading more media...</span>
+                  </div>
+                )}
+                {!loading && !hasMore && media.length > 0 && (
+                  <p className="text-sm text-gray-500">
+                    No more media to load • {totalCount} total files
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </motion.div>
       </motion.div>
