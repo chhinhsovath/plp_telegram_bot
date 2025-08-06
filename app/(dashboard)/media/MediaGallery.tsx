@@ -104,14 +104,36 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
           icon={<ImageIcon className="w-6 h-6" />}
           actions={
             <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
-              </motion.button>
+              <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    viewMode === "grid" 
+                      ? "bg-purple-600 text-white" 
+                      : "hover:bg-white/10 text-gray-400"
+                  )}
+                  title="Grid View"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    viewMode === "list" 
+                      ? "bg-purple-600 text-white" 
+                      : "hover:bg-white/10 text-gray-400"
+                  )}
+                  title="List View"
+                >
+                  <List className="w-4 h-4" />
+                </motion.button>
+              </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -340,13 +362,43 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                     ) : (
                       <AnimatedCard variant="hover" className="p-4 cursor-pointer" hover={true}>
                         <div className="flex items-center gap-4">
-                          <motion.div
-                            className={`p-3 rounded-lg ${mediaIcon.bg}`}
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.5 }}
-                          >
-                            <IconComponent className={`w-6 h-6 ${mediaIcon.color}`} />
-                          </motion.div>
+                          {/* Thumbnail for list view */}
+                          {attachment.fileType === "photo" ? (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              <PhotoThumbnail
+                                attachment={attachment}
+                                size="small"
+                              />
+                            </div>
+                          ) : attachment.fileType === "video" && attachment.thumbnailUrl ? (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
+                              <PhotoThumbnail
+                                attachment={attachment}
+                                size="small"
+                              />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <Play className="w-6 h-6 text-white" />
+                              </div>
+                            </div>
+                          ) : (attachment.mimeType?.includes('pdf') || 
+                                 attachment.mimeType?.includes('word') || 
+                                 attachment.mimeType?.includes('document') ||
+                                 attachment.fileName?.toLowerCase().match(/\.(pdf|doc|docx)$/)) ? (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              <DocumentThumbnail
+                                attachment={attachment}
+                                size="small"
+                              />
+                            </div>
+                          ) : (
+                            <motion.div
+                              className={`p-3 rounded-lg ${mediaIcon.bg} flex-shrink-0`}
+                              whileHover={{ rotate: 360 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <IconComponent className={`w-6 h-6 ${mediaIcon.color}`} />
+                            </motion.div>
+                          )}
                           
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">
