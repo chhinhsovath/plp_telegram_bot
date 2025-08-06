@@ -32,16 +32,27 @@ export default function DashboardPage() {
   const fetchDashboardStats = async () => {
     try {
       const response = await fetch("/api/dashboard/stats");
+      
+      if (response.status === 401) {
+        // User is not authenticated, redirect to login
+        window.location.href = '/login';
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setStats(data);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
-      // Use mock data as fallback
+      // Only use fallback data for actual network errors, not authentication issues
       setStats({
-        groupCount: 3,
-        messageCount: 150,
-        userCount: 5,
-        attachmentCount: 25,
+        groupCount: 0,
+        messageCount: 0,
+        userCount: 0,
+        attachmentCount: 0,
         recentMessages: [],
       });
     } finally {
