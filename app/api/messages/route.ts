@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/db';
 
@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      console.error('No session found for messages API');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,9 +28,9 @@ export async function GET(req: NextRequest) {
     // Search in message text
     if (search) {
       where.OR = [
-        { text: { contains: search, mode: 'insensitive' } },
-        { telegramUsername: { contains: search, mode: 'insensitive' } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { text: { contains: search } },
+        { telegramUsername: { contains: search } },
+        { user: { name: { contains: search } } },
       ];
     }
 
@@ -95,8 +96,19 @@ export async function GET(req: NextRequest) {
     // Calculate pagination
     const totalPages = Math.ceil(totalCount / limit);
 
+    // Convert BigInt fields to strings for JSON serialization
+    const serializedMessages = messages.map(message => ({
+      ...message,
+      telegramMessageId: message.telegramMessageId.toString(),
+      telegramUserId: message.telegramUserId.toString(),
+      attachments: message.attachments.map(att => ({
+        ...att,
+        fileSize: att.fileSize ? att.fileSize.toString() : null,
+      })),
+    }));
+
     return NextResponse.json({
-      messages,
+      messages: serializedMessages,
       pagination: {
         page,
         limit,
@@ -110,7 +122,11 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching messages:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch messages' },
+      { 
+        error: 'Failed to fetch messages',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
+      },
       { status: 500 }
     );
   }
