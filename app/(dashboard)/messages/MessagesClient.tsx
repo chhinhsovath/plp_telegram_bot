@@ -107,7 +107,7 @@ export default function MessagesClient() {
           { label: "Documents", value: stats.documents.toLocaleString(), icon: FileText, color: "pink" },
         ].map((stat, index) => (
           <motion.div key={stat.label} variants={animations.staggerItem} custom={index}>
-            <AnimatedCard variant="glass" className="p-4">
+            <AnimatedCard variant="hover" className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
@@ -123,7 +123,7 @@ export default function MessagesClient() {
       </motion.div>
 
       {/* Search and Filters */}
-      <AnimatedCard variant="glass" className="p-6">
+      <AnimatedCard variant="hover" className="p-6">
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -195,13 +195,13 @@ export default function MessagesClient() {
             ))}
           </div>
         ) : error ? (
-          <AnimatedCard variant="glass" className="p-12 text-center">
+          <AnimatedCard variant="hover" className="p-12 text-center">
             <MessageSquare className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-lg font-semibold mb-2">Failed to load messages</p>
             <p className="text-gray-500">Please try again later</p>
           </AnimatedCard>
         ) : data?.messages?.length === 0 ? (
-          <AnimatedCard variant="glass" className="p-12 text-center">
+          <AnimatedCard variant="hover" className="p-12 text-center">
             <MessageSquare className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-lg font-semibold mb-2">No messages found</p>
             <p className="text-gray-500">Try adjusting your search criteria</p>
@@ -223,7 +223,7 @@ export default function MessagesClient() {
                   onHoverEnd={() => setHoveredMessage(null)}
                 >
                   <AnimatedCard 
-                    variant="glass" 
+                    variant="hover" 
                     className="p-6 relative overflow-hidden"
                     hover={true}
                   >

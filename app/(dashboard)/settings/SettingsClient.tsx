@@ -70,7 +70,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Profile Information</h3>
@@ -143,7 +143,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Bot Configuration</h3>
@@ -268,7 +268,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <h3 className="text-lg font-semibold">Notification Preferences</h3>
                 
@@ -344,7 +344,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <h3 className="text-lg font-semibold">Security Settings</h3>
                 
@@ -434,7 +434,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <h3 className="text-lg font-semibold">Appearance Settings</h3>
                 
@@ -512,7 +512,7 @@ export default function SettingsClient({ session }: SettingsClientProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <AnimatedCard variant="glass">
+            <AnimatedCard variant="hover">
               <div className="p-6 space-y-6">
                 <h3 className="text-lg font-semibold">Advanced Settings</h3>
                 

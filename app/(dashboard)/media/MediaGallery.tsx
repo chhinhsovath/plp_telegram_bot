@@ -137,7 +137,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
             { label: "Total Size", value: mediaStats.totalSize, icon: HardDrive, color: "pink" },
           ].map((stat, index) => (
             <motion.div key={stat.label} variants={animations.staggerItem} custom={index}>
-              <AnimatedCard variant="glass" className="p-4">
+              <AnimatedCard variant="hover" className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
@@ -157,7 +157,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
         </motion.div>
 
         {/* Search and Filters */}
-        <AnimatedCard variant="glass" className="p-6">
+        <AnimatedCard variant="hover" className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -209,7 +209,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
           )}
         >
           {filteredMedia.length === 0 ? (
-            <AnimatedCard variant="glass" className="col-span-full p-12 text-center">
+            <AnimatedCard variant="hover" className="col-span-full p-12 text-center">
               <ImageIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <p className="text-lg font-semibold mb-2">No media found</p>
               <p className="text-gray-500">Try adjusting your search criteria</p>
@@ -233,7 +233,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                   >
                     {viewMode === "grid" ? (
                       <AnimatedCard 
-                        variant="glass" 
+                        variant="hover" 
                         className="relative overflow-hidden cursor-pointer group"
                         hover={true}
                       >
@@ -324,7 +324,7 @@ export default function MediaGallery({ initialMedia = [], groups = [], stats = [
                         </div>
                       </AnimatedCard>
                     ) : (
-                      <AnimatedCard variant="glass" className="p-4 cursor-pointer" hover={true}>
+                      <AnimatedCard variant="hover" className="p-4 cursor-pointer" hover={true}>
                         <div className="flex items-center gap-4">
                           <motion.div
                             className={`p-3 rounded-lg ${mediaIcon.bg}`}

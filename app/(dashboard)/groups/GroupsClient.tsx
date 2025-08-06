@@ -105,7 +105,7 @@ export default function GroupsClient({ groups = [], isAdmin }: GroupsClientProps
           { label: "Total Messages", value: stats.totalMessages.toLocaleString(), icon: MessageSquare, color: "blue" },
         ].map((stat, index) => (
           <motion.div key={stat.label} variants={animations.staggerItem} custom={index}>
-            <AnimatedCard variant="glass" className="p-4">
+            <AnimatedCard variant="hover" className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
@@ -121,7 +121,7 @@ export default function GroupsClient({ groups = [], isAdmin }: GroupsClientProps
       </motion.div>
 
       {/* Search and Filter */}
-      <AnimatedCard variant="glass" className="p-4">
+      <AnimatedCard variant="hover" className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -193,7 +193,7 @@ export default function GroupsClient({ groups = [], isAdmin }: GroupsClientProps
             >
               <Link href={`/groups/${group.id}`}>
                 <AnimatedCard 
-                  variant="glass" 
+                  variant="hover" 
                   className="p-6 cursor-pointer relative overflow-hidden h-full"
                   hover={true}
                 >
